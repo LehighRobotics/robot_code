@@ -7,6 +7,7 @@ byte centMin = 255; // The smallest index in the center square that has been fou
 
 //TODO: continue writing methods to manipulate squareData and replace old arrays
 byte squareData[Size + 1][Size + 1]; //0 - Explored, 1 and 2 - Parent Direction, 3, 4, 5, 6 - Walls (N, S, E, W) 7 - virtual walls on/off
+//vvv between is being replaced by above line
 byte I[Size+1][Size+1]; // Array of indicies
 boolean E[Size+1][Size+1]; // Array of explored locations
 
@@ -21,6 +22,7 @@ boolean vWw[Size+1][Size+1];
 boolean vWe[Size+1][Size+1];
 
 byte P[Size+1][Size+1];
+//^^^
 byte whereToGo[2];
 byte finalCenterSquare[2]; //holds the destination final center square
 byte breadCrumbs[((Size+1)^2)];
