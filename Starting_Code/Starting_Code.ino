@@ -421,7 +421,7 @@ void setEastWallBit(int lx, int ly, int q)
     if (lx < Size)
     {
       bitSet(squareData[lx + 1][ly], 6); 
-    {
+    }
   }
    
   
@@ -479,6 +479,7 @@ void setWestWallBit(int lx, int ly, int q)
     {
       bitSet(squareData[lx - 1][ly], 5); 
     }
+  }
   
 }
 
