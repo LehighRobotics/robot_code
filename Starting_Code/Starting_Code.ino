@@ -301,13 +301,13 @@ void intializeSquareData()
     {
 
       bitClear(squareData[i][j] ,0); //sets bit 0 to 0
-      bitSet(squareData[i][j] ,1); //sets bit 1 to 0
-      bitSet(squareData[i][j] ,2); //sets bit 2 to 0
-      bitSet(squareData[i][j] ,3); //sets bit 3 to 0
-      bitSet(squareData[i][j] ,4); //sets bit 4 to 0
-      bitSet(squareData[i][j] ,5); //sets bit 5 to 0
-      bitSet(squareData[i][j] ,6); //sets bit 6 to 0
-      bitSet(squareData[i][j] ,7); //sets bit 7 to 0
+      bitClear(squareData[i][j] ,1); //sets bit 1 to 0
+      bitClear(squareData[i][j] ,2); //sets bit 2 to 0
+      bitClear(squareData[i][j] ,3); //sets bit 3 to 0
+      bitClear(squareData[i][j] ,4); //sets bit 4 to 0
+      bitClear(squareData[i][j] ,5); //sets bit 5 to 0
+      bitClear(squareData[i][j] ,6); //sets bit 6 to 0
+      bitClear(squareData[i][j] ,7); //sets bit 7 to 0
       
       
     } 
@@ -320,16 +320,16 @@ void intializeSquareData()
 //NEW CODE
 //
 //
-/* setExplored
+/* setExploredBit
 *  given an x and y location, as well as a 0/1 for true false,
 *  sets the bit for explored to that value
 */
-void setExplored(int lx, int ly, int q)
+void setExploredBit(int lx, int ly, int q)
 {
   bitSet(squareData[lx][ly], q);
 }
 
-/* setParent
+/* setParentBit
 *  given an x and y location, as well as two 0/1 values,
 *  sets the parent of the block at (x,y) 
 *  by changing the values of bits 1 and 2
@@ -338,7 +338,7 @@ void setExplored(int lx, int ly, int q)
 *  10 - East
 *  11 - West
 */
-void setParent(int lx, int ly, int q1, int q2)
+void setParentBit(int lx, int ly, int q1, int q2)
 {
   //north
   if ((q1 == 0) && (q2 == 0))
@@ -481,8 +481,7 @@ void setWestWallBit(int lx, int ly, int q)
       bitSet(squareData[lx - 1][ly], 5); 
     }
   }
-<<<<<<< HEAD
-=======
+
 }
 
 /* 
@@ -500,7 +499,7 @@ void setVirtualWallsBit(int lx, int ly, int q)
   
   else if (q == 0)
   {
-    bitClear(SquareData[lx][ly], 7);
+    bitClear(squareData[lx][ly], 7);
   }
  
 }
@@ -538,7 +537,6 @@ int getParentBit(int lx, int ly)
   {
     return 0; //north
   }
->>>>>>> origin/master
   
   if ((bitRead(squareData[lx][ly], 1) == 0) && (bitRead(squareData[lx][ly], 2) == 1))
   {
