@@ -332,6 +332,7 @@ void setExplored(int lx, int ly, int q)
 /* setParent
 *  given an x and y location, as well as two 0/1 values,
 *  sets the parent of the block at (x,y) 
+*  by changing the values of bits 1 and 2
 *  00 - North
 *  01 - South
 *  10 - East
@@ -405,7 +406,7 @@ void setNorthWallBit(int lx, int ly, int q)
 */
 void setEastWallBit(int lx, int ly, int q)
 {
-  
+  //remove a real wall
   if (q == 0)
   {
     bitClear(squareData[lx][ly], 5);
@@ -414,7 +415,7 @@ void setEastWallBit(int lx, int ly, int q)
       bitClear(squareData[lx + 1][ly], 6);
     }
   } 
-  
+  //add a real wall
   else if (q == 1)
   {
     bitSet(squareData[lx][ly], 5);
@@ -434,7 +435,7 @@ void setEastWallBit(int lx, int ly, int q)
 */
 void setSouthWallBit(int lx, int ly, int q)
 {
-  
+  //remove a real wall
   if (q == 0)
   {
     bitClear(squareData[lx][ly], 4);
@@ -443,7 +444,7 @@ void setSouthWallBit(int lx, int ly, int q)
       bitClear(squareData[lx][ly - 1], 3);
     }
   } 
-  
+  //add a real wall
   else if (q == 1)
   {
     bitSet(squareData[lx][ly], 4); 
@@ -462,7 +463,7 @@ void setSouthWallBit(int lx, int ly, int q)
 */
 void setWestWallBit(int lx, int ly, int q)
 {
-  
+  //remove a real wall
   if (q == 0)
   {
     bitClear(squareData[lx][ly], 6); 
@@ -471,7 +472,7 @@ void setWestWallBit(int lx, int ly, int q)
       bitClear(squareData[lx - 1][ly], 5); 
     }
   } 
-  
+  //add a real wall
   else if (q == 1)
   { 
     bitSet(squareData[lx][ly], 6);
@@ -479,8 +480,105 @@ void setWestWallBit(int lx, int ly, int q)
     {
       bitSet(squareData[lx - 1][ly], 5); 
     }
-  
+  }
 }
+
+/* 
+*  setVirtualWallsBit
+*  sets whether a square is boxed by virtual walls 
+*  1 - boxed, 0 - not boxed
+*  all four walls done at once
+*/
+void setVirtualWallsBit(int lx, int ly, int q)
+{ 
+  if (q == 1)
+  {
+    bitSet(squareData[lx][ly], 7);
+  }
+  
+  else if (q == 0)
+  {
+    bitClear(SquareData[lx][ly], 7);
+  }
+ 
+}
+
+/*
+*  getExploredBit
+*  returns true if the given square is explored
+*  and false if it is not yet explored
+*/
+bool getExploredBit(int lx, int ly)
+{
+  if (bitRead(squareData[lx][ly], 0) == 1)
+  {
+    return true;
+  }
+  
+  else if (bitRead(squareData[lx][ly], 0) == 0)
+  {
+    return false;
+  }
+}
+
+/*
+*  getParentBit
+*  returns an int to indicate the direction of the parent
+*  of the given square
+*  0 = north
+*  1 = south
+*  2 = east
+*  3 = west
+*/
+int getParentBit(int lx, int ly)
+{
+  if ((bitRead(squareData[lx][ly], 1) == 0) && (bitRead(squareData[lx][ly], 2) == 0))
+  {
+    return 0; //north
+  }
+  
+  if ((bitRead(squareData[lx][ly], 1) == 0) && (bitRead(squareData[lx][ly], 2) == 1))
+  {
+    return 1; //south
+  }
+  
+  if ((bitRead(squareData[lx][ly], 1) == 1) && (bitRead(squareData[lx][ly], 2) == 0))
+  {
+    return 2; //east
+  }
+  
+  if ((bitRead(squareData[lx][ly], 1) == 1) && (bitRead(squareData[lx][ly], 2) == 1))
+  {
+    return 3; //west
+  }
+
+}
+
+bool getWallNorthBit(int lx, int ly)
+{
+
+}
+
+bool getWallSouthBit(int lx, int ly)
+{
+
+}
+
+bool getWallEastBit(int lx, int ly)
+{
+
+}
+
+bool getWallWestBit(int lx, int ly)
+{
+
+}
+
+bool getWallVirtualBit(int lx, int ly)
+{
+
+}
+
 
 //
 //
