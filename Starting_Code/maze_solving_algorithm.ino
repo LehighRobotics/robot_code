@@ -1,4 +1,4 @@
-#include <MemoryFree.h>
+//#include <MemoryFree.h>
 int counter = 0;
 byte Lx = 0; // Current X coordinate
 byte Ly = 0; // Current Y coordinate
@@ -303,13 +303,13 @@ void intializeSquareData()
     {
 
       bitClear(squareData[i][j] ,0); //sets bit 0 to 0
-      bitSet(squareData[i][j] ,1); //sets bit 1 to 0
-      bitSet(squareData[i][j] ,2); //sets bit 2 to 0
-      bitSet(squareData[i][j] ,3); //sets bit 3 to 0
-      bitSet(squareData[i][j] ,4); //sets bit 4 to 0
-      bitSet(squareData[i][j] ,5); //sets bit 5 to 0
-      bitSet(squareData[i][j] ,6); //sets bit 6 to 0
-      bitSet(squareData[i][j] ,7); //sets bit 7 to 0
+      bitClear(squareData[i][j] ,1); //sets bit 1 to 0
+      bitClear(squareData[i][j] ,2); //sets bit 2 to 0
+      bitClear(squareData[i][j] ,3); //sets bit 3 to 0
+      bitClear(squareData[i][j] ,4); //sets bit 4 to 0
+      bitClear(squareData[i][j] ,5); //sets bit 5 to 0
+      bitClear(squareData[i][j] ,6); //sets bit 6 to 0
+      bitClear(squareData[i][j] ,7); //sets bit 7 to 0
       
       
     } 
@@ -317,54 +317,59 @@ void intializeSquareData()
   }  
 }
 
-//
-//
-//NEW CODE
-//
-//
-/* setExplored
-*  given an x and y location, as well as a 0/1 for true false,
-*  sets the bit for explored to that value
+
+/* setExploredBit
+*  given an x and y location
+*  sets the bit for explored to 1 (true)
 */
-void setExplored(int lx, int ly, int q)
+void setExploredBit(int lx, int ly)
 {
-  bitSet(squareData[lx][ly], q);
+   bitSet(squareData[lx][ly], 0);
 }
 
-/* setParent
+/*
+*  Overload setExploredBit - pass bool as well to 
+*  set explored to 0 (false)
+*/
+void setExploredBit(int lx, int ly, boolean flag)
+{
+   bitClear(squareData[lx][ly], 0);
+}
+
+/* setParentBit
 *  given an x and y location, as well as two 0/1 values,
 *  sets the parent of the block at (x,y) 
 *  by changing the values of bits 1 and 2
-*  00 - North
-*  01 - South
-*  10 - East
-*  11 - West
+*  0 - North
+*  1 - South
+*  2 - East
+*  3 - West
 */
-void setParent(int lx, int ly, int q1, int q2)
+void setParentBit(int lx, int ly, int q)
 {
   //north
-  if ((q1 == 0) && (q2 == 0))
+  if (q == 0)
   {
     bitClear(squareData[lx][ly], 1);
     bitClear(squareData[lx][ly], 2);
   }
   
   //south
-  else if ((q1 == 0) && (q2 == 1))
+  else if (q == 1)
   {
     bitClear(squareData[lx][ly], 1);
     bitSet(squareData[lx][ly], 2);
   }
   
   //east
-  else if ((q1 == 1) && (q2 == 0))
+  else if (q == 2)
   {
     bitSet(squareData[lx][ly], 1);
     bitClear(squareData[lx][ly], 2);
   }
   
   //west
-  else if ((q1 == 1) && (q2 == 1))
+  else if (q == 3)
   {
     bitSet(squareData[lx][ly], 1);
     bitSet(squareData[lx][ly], 2);
@@ -372,137 +377,138 @@ void setParent(int lx, int ly, int q1, int q2)
   
 }
 
-/* setNorthWallBit
+/* setWallBitNorth
 *  given coordinates of square, sets its north wall (and the south wall of the one above it)
-*  to either true (1) or false (0)
+*  to true (1) 
 *  by changing bit 3
 */
-void setNorthWallBit(int lx, int ly, int q)
+void setWallBitNorth(int lx, int ly)
 {
-  //remove a real wall
-  if (q == 0)
-  {
-    bitClear(squareData[lx][ly], 3);
-    if (ly < Size)
-    {
-      bitClear(squareData[lx][ly + 1], 4);
-    }
-  } 
-  
-  //add a real wall
-  else if (q == 1)
-  {
+   //add wall
     bitSet(squareData[lx][ly], 3);
     if (ly < Size)
     {
       bitSet(squareData[lx][ly + 1], 4); 
     }
-  }
+
+}
+  
+/*
+*  Overload- add boolean flag to set to 0
+*  (false) instead
+*/
+void setWallBitNorth(int lx, int ly, boolean flag)
+{
+   bitClear(squareData[lx][ly], 3);
+   if (ly < Size)
+   {
+     bitClear(squareData[lx][ly + 1], 4);
+   }
+}
+
+/* setWallBitEast
+*  given coordinates of square, sets its east wall (and the west wall of the one to its right)
+*  to true (1) 
+*  by changing bit 5
+*/
+void setWallBitEast(int lx, int ly)
+{
+    bitSet(squareData[lx][ly], 5);
+    if (lx < Size)
+    {
+      bitSet(squareData[lx + 1][ly], 6); 
+    }
   
 }
 
-/* setEastWallBit
-*  given coordinates of square, sets its east wall (and the west wall of the one to its right)
-*  to either true (1) or false (0)
-*  by changing bit 5
+/*
+*  Overload - add boolean flag to 
+*  set to 0 (false) instead
 */
-void setEastWallBit(int lx, int ly, int q)
+void setWallBitEast(int lx, int ly, boolean flag)
 {
-  //remove a real wall
-  if (q == 0)
-  {
     bitClear(squareData[lx][ly], 5);
     if (lx < Size)
     {
       bitClear(squareData[lx + 1][ly], 6);
     }
-  } 
-  //add a real wall
-  else if (q == 1)
-  {
-    bitSet(squareData[lx][ly], 5);
-    if (lx < Size)
-    {
-      bitSet(squareData[lx + 1][ly], 6); 
-    {
-  }
+
    
-  
 }
 
-/* setSouthWallBit
+/* setWallBitsSouth
 *  given coordinates of square, sets its south wall (and the north wall of the one under it)
-*  to either true (1) or false (0)
+*  to true (1)
 *  by changing bit 4
 */
-void setSouthWallBit(int lx, int ly, int q)
+void setWallBitSouth(int lx, int ly)
 {
-  //remove a real wall
-  if (q == 0)
-  {
-    bitClear(squareData[lx][ly], 4);
-    if (ly != 0)
-    {
-      bitClear(squareData[lx][ly - 1], 3);
-    }
-  } 
-  //add a real wall
-  else if (q == 1)
-  {
-    bitSet(squareData[lx][ly], 4); 
-    if (ly != 0)
-    {
-      bitSet(squareData[lx][ly - 1], 3);
-    }
-  }
-  
+   bitSet(squareData[lx][ly], 4); 
+   if (ly != 0)
+   {
+     bitSet(squareData[lx][ly - 1], 3);
+   }
+
 }
 
-/* setWestWallBit
+/*
+*  Overload - pass a boolean flag to 
+*  set value to false (0) instead
+*/
+void setWallBitSouth(int lx, int ly, boolean flag)
+{ 
+   bitClear(squareData[lx][ly], 4);
+   if (ly != 0)
+   {
+     bitClear(squareData[lx][ly - 1], 3);
+   }
+}
+
+/* setWallBitWest
 *  given coordinates of a square, sets its west wall (and the east wall of the one to its left)
-*  to either true (1) or false (0)
+*  to true (1) 
 *  by changing bit 6
 */
-void setWestWallBit(int lx, int ly, int q)
+void setWallBitWest(int lx, int ly)
 {
-  //remove a real wall
-  if (q == 0)
-  {
-    bitClear(squareData[lx][ly], 6); 
-    if (lx != 0)
-    {
-      bitClear(squareData[lx - 1][ly], 5); 
-    }
-  } 
-  //add a real wall
-  else if (q == 1)
-  { 
     bitSet(squareData[lx][ly], 6);
     if (lx != 0)
     {
       bitSet(squareData[lx - 1][ly], 5); 
     }
-  }
+}
+
+/*
+*  Overload - pass a boolean flag to
+*  set value to flase (0) instead
+*/
+void setWallBitWest(int lx, int ly, boolean flag)
+{
+    bitClear(squareData[lx][ly], 6); 
+    if (lx != 0)
+    {
+      bitClear(squareData[lx - 1][ly], 5); 
+    }
 }
 
 /* 
 *  setVirtualWallsBit
-*  sets whether a square is boxed by virtual walls 
-*  1 - boxed, 0 - not boxed
+*  sets a square to be boxed by virtual walls 
+*  1 - boxed
 *  all four walls done at once
 */
-void setVirtualWallsBit(int lx, int ly, int q)
-{ 
-  if (q == 1)
-  {
-    bitSet(squareData[lx][ly], 7);
-  }
-  
-  else if (q == 0)
-  {
-    bitClear(SquareData[lx][ly], 7);
-  }
- 
+void setVirtualWallsBit(int lx, int ly)
+{
+   bitSet(squareData[lx][ly], 7);   
+}
+
+/*
+*  Overload - pass in a boolean flag to remove all four walls instead
+*  (value 0)
+*/
+void setVirtualWallsBit(int lx, int ly, boolean flag)
+{
+   bitClear(squareData[lx][ly], 7);
 }
 
 /*
@@ -510,7 +516,7 @@ void setVirtualWallsBit(int lx, int ly, int q)
 *  returns true if the given square is explored
 *  and false if it is not yet explored
 */
-bool getExploredBit(int lx, int ly)
+boolean getExploredBit(int lx, int ly)
 {
   if (bitRead(squareData[lx][ly], 0) == 1)
   {
@@ -556,37 +562,77 @@ int getParentBit(int lx, int ly)
 
 }
 
-bool getWallNorthBit(int lx, int ly)
+boolean getWallBitNorth(int lx, int ly)
 {
+  if (bitRead(squareData[lx][ly], 3) == 1)
+  {
+     return true;
+  }
+
+  else if (bitRead(squareData[lx][ly], 3) == 0)
+  {
+    return false;
+  }
+}
+
+boolean getWallBitSouth(int lx, int ly)
+{
+   if (bitRead(squareData[lx][ly], 4) == 1)
+   {
+      return true;
+   }
+ 
+   else if (bitRead(squareData[lx][ly], 4) == 0)
+   { 
+      return false;
+   }
+}
+
+boolean getWallBitEast(int lx, int ly)
+{
+   if (bitRead(squareData[lx][ly], 5) == 1)
+   {
+      return true;
+   }
+ 
+   else if (bitRead(squareData[lx][ly], 5) == 0)
+   { 
+      return false;
+   }
+
 
 }
 
-bool getWallSouthBit(int lx, int ly)
+boolean getWallBitWest(int lx, int ly)
 {
+   if (bitRead(squareData[lx][ly], 6) == 1)
+   {
+      return true;
+   }
+ 
+   else if (bitRead(squareData[lx][ly], 6) == 0)
+   { 
+      return false;
+   }
+
 
 }
 
-bool getWallEastBit(int lx, int ly)
+boolean getVirtualWallsBit(int lx, int ly)
 {
+   if (bitRead(squareData[lx][ly], 7) == 1)
+   {
+      return true;
+   }
+ 
+   else if (bitRead(squareData[lx][ly], 7) == 0)
+   { 
+      return false;
+   }
+
 
 }
 
-bool getWallWestBit(int lx, int ly)
-{
-
-}
-
-bool getWallVirtualBit(int lx, int ly)
-{
-
-}
-
-
-//
-//
-//END NEW CODE
-//
-//
 
 /* initializeParents
 *  Initializes the parents array to all fours (Since four is an invalid number for a parent if the four is ever used an runtime error will occur)
@@ -1763,6 +1809,8 @@ void outputMaze() {
   Serial.println("#");
   Serial.println();
 }
+
+
 
 
 
