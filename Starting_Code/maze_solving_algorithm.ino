@@ -7,8 +7,12 @@ byte centMin = 255; // The smallest index in the center square that has been fou
 
 //TODO: continue writing methods to manipulate squareData and replace old arrays
 byte squareData[Size + 1][Size + 1]; //0 - Explored, 1 and 2 - Parent Direction, 3, 4, 5, 6 - Walls (N, S, E, W) 7 - virtual walls on/off
+byte I[Size+1][Size+1]; // Array of indicies //index array
+
+//PARENT DIRECTION: 00 - north, 11 - south, 10 - east, 01 - west
+//I is the horizontal component of the matrix definition and J is the vertical component. The origin (0,0) is defined as the bottom left corner.
+
 //vvv between is being replaced by above line
-byte I[Size+1][Size+1]; // Array of indicies
 boolean E[Size+1][Size+1]; // Array of explored locations
 
 boolean Wn[Size+1][Size+1]; // Array of northern walls
@@ -23,12 +27,12 @@ boolean vWe[Size+1][Size+1];
 
 byte P[Size+1][Size+1];
 //^^^
+
 byte whereToGo[2];
 byte finalCenterSquare[2]; //holds the destination final center square
 byte breadCrumbs[((Size+1)^2)];
 byte finishToStartDirections[((Size+1)^2)];
 
-// I is the horizontal component of the matrix definition and J is the vertical component. The origin is defined as the bottom left corner.
 
 byte testSize = Size;
 
@@ -169,8 +173,8 @@ byte testSize = Size;
 //  {0,1,1,0,0,1,1,1,1,1,0,1,0,0,0,0}
 //};
     
-boolean testWs[Size+1][Size+1];
-boolean testWe[Size+1][Size+1];
+//boolean testWs[Size+1][Size+1];
+//boolean testWe[Size+1][Size+1];
 
 
 
@@ -294,6 +298,7 @@ void loop() {
 
 /* initializeSquareData
 *  sets all eight bits to 0 for each square in the maze
+*  and adds the outer walls (sets to 1)
 */
 void intializeSquareData()
 {
@@ -311,10 +316,33 @@ void intializeSquareData()
       bitClear(squareData[i][j] ,6); //sets bit 6 to 0
       bitClear(squareData[i][j] ,7); //sets bit 7 to 0
       
-      
     } 
     
   }  
+  
+  //Set South walls
+  for (int q = 0; q <= Size; q++)
+  {
+    bitSet(squareData[0][q] ,4);
+  }
+  
+  //Set North walls
+  for (int q = 0; q <= Size; q++)
+  {
+    bitSet(squareData[Size][q] ,3);
+  }
+  
+  //Set West walls
+  for (int q = 0; q <= Size; q++)
+  {
+    bitSet(squareData[q][0] ,6);
+  }
+  
+  //Set East walls
+  for (int q = 0; q <= Size; q++)
+  {
+    bitSet(squareData[q][Size] ,5);
+  }
 }
 
 
@@ -337,7 +365,7 @@ void setExploredBit(int lx, int ly, boolean flag)
 }
 
 /* setParentBit
-*  given an x and y location, as well as two 0/1 values,
+*  given an x and y location, as well as a single 0 - 3 int,
 *  sets the parent of the block at (x,y) 
 *  by changing the values of bits 1 and 2
 *  0 - North
@@ -347,32 +375,37 @@ void setExploredBit(int lx, int ly, boolean flag)
 */
 void setParentBit(int lx, int ly, int q)
 {
-  //north
+  //north (00)
   if (q == 0)
   {
-    bitClear(squareData[lx][ly], 1);
+    bitClear(squareData[lx][ly], 1); 
     bitClear(squareData[lx][ly], 2);
   }
   
-  //south
+  //south (11)
   else if (q == 1)
   {
-    bitClear(squareData[lx][ly], 1);
+    bitSet(squareData[lx][ly], 1);
     bitSet(squareData[lx][ly], 2);
   }
   
-  //east
+  //east (10)
   else if (q == 2)
   {
     bitSet(squareData[lx][ly], 1);
     bitClear(squareData[lx][ly], 2);
   }
   
-  //west
+  //west (01)
   else if (q == 3)
   {
-    bitSet(squareData[lx][ly], 1);
+    bitClear(squareData[lx][ly], 1);
     bitSet(squareData[lx][ly], 2);
+  }
+  
+  else 
+  {
+    Serial.println("Invalid parent parameter"); 
   }
   
 }
@@ -388,21 +421,21 @@ void setWallBitNorth(int lx, int ly)
     bitSet(squareData[lx][ly], 3);
     if (ly < Size)
     {
-      bitSet(squareData[lx][ly + 1], 4); 
+      bitSet(squareData[lx][ly + 1], 4); //sets south of neighboring square
     }
 
 }
   
 /*
-*  Overload- add boolean flag to set to 0
-*  (false) instead
+*  Overload- add boolean flag to set
+*  to 0 (false) instead
 */
 void setWallBitNorth(int lx, int ly, boolean flag)
 {
    bitClear(squareData[lx][ly], 3);
    if (ly < Size)
    {
-     bitClear(squareData[lx][ly + 1], 4);
+     bitClear(squareData[lx][ly + 1], 4); //clears south of neighboring square
    }
 }
 
@@ -416,7 +449,7 @@ void setWallBitEast(int lx, int ly)
     bitSet(squareData[lx][ly], 5);
     if (lx < Size)
     {
-      bitSet(squareData[lx + 1][ly], 6); 
+      bitSet(squareData[lx + 1][ly], 6); //sets west of neighboring square
     }
   
 }
@@ -430,7 +463,7 @@ void setWallBitEast(int lx, int ly, boolean flag)
     bitClear(squareData[lx][ly], 5);
     if (lx < Size)
     {
-      bitClear(squareData[lx + 1][ly], 6);
+      bitClear(squareData[lx + 1][ly], 6); //clears west of neighboring square
     }
 
    
@@ -446,7 +479,7 @@ void setWallBitSouth(int lx, int ly)
    bitSet(squareData[lx][ly], 4); 
    if (ly != 0)
    {
-     bitSet(squareData[lx][ly - 1], 3);
+     bitSet(squareData[lx][ly - 1], 3); //sets north of neighboring square
    }
 
 }
@@ -460,7 +493,7 @@ void setWallBitSouth(int lx, int ly, boolean flag)
    bitClear(squareData[lx][ly], 4);
    if (ly != 0)
    {
-     bitClear(squareData[lx][ly - 1], 3);
+     bitClear(squareData[lx][ly - 1], 3); //clears north of neighboring square
    }
 }
 
@@ -474,7 +507,7 @@ void setWallBitWest(int lx, int ly)
     bitSet(squareData[lx][ly], 6);
     if (lx != 0)
     {
-      bitSet(squareData[lx - 1][ly], 5); 
+      bitSet(squareData[lx - 1][ly], 5);  //sets east of neighboring square
     }
 }
 
@@ -487,20 +520,21 @@ void setWallBitWest(int lx, int ly, boolean flag)
     bitClear(squareData[lx][ly], 6); 
     if (lx != 0)
     {
-      bitClear(squareData[lx - 1][ly], 5); 
+      bitClear(squareData[lx - 1][ly], 5); //clears east of neighboring square
     }
 }
 
 /* 
 *  setVirtualWallsBit
 *  sets a square to be boxed by virtual walls 
-*  1 - boxed
+*  1 - boxed, 0 - unboxed
 *  all four walls done at once
 */
 void setVirtualWallsBit(int lx, int ly)
 {
    bitSet(squareData[lx][ly], 7);   
 }
+
 
 /*
 *  Overload - pass in a boolean flag to remove all four walls instead
@@ -520,12 +554,12 @@ boolean getExploredBit(int lx, int ly)
 {
   if (bitRead(squareData[lx][ly], 0) == 1)
   {
-    return true;
+    return true; //is explored
   }
   
   else if (bitRead(squareData[lx][ly], 0) == 0)
   {
-    return false;
+    return false; //is not explored
   }
 }
 
@@ -650,9 +684,29 @@ void initializeParents() {
   whereToGo[1] = Size+1;
 }
 
+
+// initialize all parent bits to 00 (north) as default. Default is irrelevant
+void initializeParentBit()
+{
+  Serial.println("Initialize Parents");
+  for (int i = 0; i <= Size; i++)
+  {
+    for (int j = 0; i <= Size; j++)
+    {
+      bitClear(squareData[i][j], 1);
+      bitClear(squareData[i][j], 2);
+    } 
+  }
+  
+  whereToGo[0] = Size + 1;
+  whereToGo[1] = Size + 1;
+}
+
+
 /* updateCentMin
 *  Checks the indices of all the center squares and makes sure centMin is set to the lowest values
 *  TODO: Make it so that this method is not dependant on finalCenterSquare being initialized to higher than Size
+*  can be left as is for now
 */
 void updateCentMin() {
   if(finalCenterSquare[0]<Size) {      //TODO: Make it so that this mtethod is not dependant on finalCenterSquare being initialized to higher than Size
@@ -660,9 +714,14 @@ void updateCentMin() {
   }
 }
 
+
+
+
+
 /* initializeWalls
 *  Initializes all the wall physical wall matrices to 0, except for the outer walls which are set to 1.(Since we know them to be there)
 *  Also Initializes all the indices to 0 and the Explored Square Matrix to 0
+*  now replaced by code in initializeSquareData()
 */
 void initializeWalls() {
   Serial.println("Initialize Walls");
@@ -693,6 +752,7 @@ void initializeWalls() {
 /*  destroyVirtualWalls
  *  Sets all virtual walls to zero in the entire matrix
  *  Also, used to initialize the virtual walls
+ *  this is now carried out in initializeSquareData()
  */
 void destroyVirtualWalls() {
   for (int i = 0; i <= Size; i++) {
@@ -707,6 +767,7 @@ void destroyVirtualWalls() {
 
 /* isCenter
 *  Returns true if the robot is physically in one of the four center squares
+*  doesn't require updating
 */
 boolean isCenter() {
   if((Lx == (Size/2) && Ly == (Size/2)) || (Lx == (Size/2) && Ly == ((Size/2)+1)) || ((Lx == (Size/2)+1) && Ly == (Size/2)) || ((Lx == (Size/2)+1) && Ly == ((Size/2)+1))) {
@@ -716,6 +777,8 @@ boolean isCenter() {
     return false;
   }
 }
+
+
 
 /* isCenter
 *  Returns true if the passed in square is one of the four center squares
@@ -736,7 +799,7 @@ boolean isCenter(int lx, int ly) {
 *  This method updates center 4 squares and creates this "destination square"
 *  WARNING: -This method sets the physical walls around all the center squares to true. It relies on the parent of the "destination square" to remove the improperly set physical wall
 *           -This method also assumes you have run all the sweeps and linearity checks
-*/
+*
 void visitCenter(){
   centMin = I[Lx][Ly];		//Update centMin with the index of your current square
   
@@ -794,6 +857,76 @@ void visitCenter(){
     We[Lx-1][Ly] = 0;
   }
 }
+*/
+
+/* updated visitCenter
+*  This function is supposed to be run when the robot first reaches a center square
+*  Once we reach the center we know which of the 4 center squares is our "destination square." By knowing the "destination square" we can improve our sweep functions by using that square
+*  in particular instead of considering all four center squares.
+*  This method updates center 4 squares and creates this "destination square"
+*  WARNING: -This method sets the physical walls around all the center squares to true. It relies on the parent of the "destination square" to remove the improperly set physical wall
+*           -This method also assumes you have run all the sweeps and linearity checks
+*/
+void visitCenter()
+{
+  centMin = I[Lx][Ly];		//Update centMin with the index of your current square
+  
+  //Figure out the matrix indices for all the center squares
+  int low = (Size/2);
+  int high = (Size/2)+1;
+
+  //Even though we haven't technically explored all the center squares we know everything about them so we can say we've explored them all
+  bitSet(squareData[low][low], 0);
+  bitSet(squareData[low][high], 0);
+  bitSet(squareData[high][low], 0);
+  bitSet(squareData[high][high], 0);
+
+  
+  //Sets all the physical walls of all four of the center squares to true
+  setWallBitNorth(low,low);
+  setWallBitSouth(low,low);
+  setWallBitEast(low,low);
+  setWallBitWest(low,low);
+
+  setWallBitNorth(low,high);
+  setWallBitSouth(low,high);
+  setWallBitEast(low,high);
+  setWallBitWest(low,high);
+  
+  setWallBitNorth(high,low);
+  setWallBitSouth(high,low);
+  setWallBitEast(high,low);
+  setWallBitWest(high,low);
+
+  setWallBitNorth(high, high);
+  setWallBitSouth(high, high);
+  setWallBitEast(high, high);
+  setWallBitWest(high, high);
+
+  //Sets the "destination square" to our current location
+  finalCenterSquare[0]=Lx;
+  finalCenterSquare[1]=Ly;
+  
+  //Delete the physical wall that is blocking the entrance to the center that was improperly set above
+  if(getParentBit(Lx, Ly) == 0) {
+    setWallBitNorth(Lx, Ly, false); //boolean flag indicates clearing a wall
+    setWallBitSouth(Lx, Ly + 1, false);
+  } 
+  else if(getParentBit(Lx, Ly) == 1) {
+    setWallBitSouth(Lx, Ly, false);
+    setWallBitNorth(Lx, Ly - 1, false);
+  } 
+  else if(getParentBit(Lx, Ly) == 2) {
+    setWallBitEast(Lx, Ly, false);
+    setWallBitWest(Lx + 1, Ly, false);
+  } 
+  else if (getParentBit(Lx, Ly) == 3) {
+    setWallBitWest(Lx, Ly, false);
+    setWallBitEast(Lx - 1, Ly, false);
+  }
+}
+
+
 
 // Reads sensor data and determines if there is a wall to the north
 boolean isNorthWall() {
@@ -819,6 +952,7 @@ boolean isEastWall() {
 */
 void moveUnit(int x){
   if (x == 0) {
+    //motor code
     Ly = Ly+1;
   }
   else if (x == 1) {
@@ -834,8 +968,8 @@ void moveUnit(int x){
 
 /* numberOfWalls
 *  Returns the number of walls detectetd by the sensors in the square the robot is in
-*  TODO: This method might never be used. Check this!!!
-*/
+*  Never used, instead the two parameter function is used in dead end sweep
+*
 int numberOfWalls(){
   int numberOfWalls = 0; //Keeps count of number of walls
   if(isNorthWall()) {
@@ -854,10 +988,11 @@ int numberOfWalls(){
 //  Serial.println(numberOfWalls);
   return numberOfWalls;
 }
+*/
 
 /* numberOfWalls
-*  TODO: I have no clue what this method does and it is probably unused.
-*/
+*  Never used, instead the two parameter function is used in dead end sweep
+*
 int numberOfWalls(int x){
   int numberOfWalls = 0; //keeps count of number of walls
   if ((x == 2) || (x == 3)){
@@ -880,12 +1015,13 @@ int numberOfWalls(int x){
   Serial.println(numberOfWalls);
   return numberOfWalls;
 }
+*/
 
 /* set****Wall
  * The set wall methods should always be used when mapping walls as the set the walls of the square you are in as well 
  * as the complementary walls of the adjacent squares
  * For example setting the west wall of one square will set the east wall of the adjacent square to the west
- */
+ * obsolete with new set methods
 void setNorthWall(int lx, int ly) {
   Serial.print("Setting North Wall; ");
   Wn[lx][ly] = true;
@@ -917,11 +1053,12 @@ void setEastWall(int lx, int ly) {
     Ww[lx+1][ly] = true;
   }
 }
-
+*/
 
 
 /* setVirtual*****Wall
 *  Performs the same task as the normal set wall method but with virtual walls
+*  obsolete due to new set method
 */
 void setVirtualNorthWall(int lx, int ly) {
   vWn[lx][ly] = true;
@@ -951,8 +1088,10 @@ void setVirtualEastWall(int lx, int ly) {
   }
 }
 
+
 /* getWall****
 *  Returns true if either the real or virtual wall is set in the specified position
+*  obsolete because of new get methods
 */
 boolean getWallNorth(int lx, int ly) {
   if(vWn[lx][ly] || Wn[lx][ly]) {
@@ -984,7 +1123,7 @@ boolean getWallEast(int lx, int ly) {
 
 /* updateWalls
 *  Reads in sensor values and sets the walls of the square the robot is in accordingly
-*/
+*
 void updateWalls() {
   if(isNorthWall() == true) {
     setNorthWall(Lx, Ly);
@@ -998,6 +1137,35 @@ void updateWalls() {
   if(isEastWall() == true) {
     setEastWall(Lx, Ly);
   }
+}
+*/
+
+
+// updateWalls
+// new, updated version of updateWalls
+void updateWalls()
+{
+  if(isNorthWall())
+ {
+   setWallBitNorth(Lx, Ly);
+ } 
+ 
+ if(isSouthWall())
+ {
+   setWallBitSouth(Lx, Ly);
+ } 
+ 
+ if(isEastWall())
+ {
+   setWallBitEast(Lx, Ly);
+ } 
+ 
+ if(isWestWall())
+ {
+   setWallBitWest(Lx, Ly);
+ } 
+  
+  
 }
 
 /*VIRTUAL TEST METHOD
@@ -1023,9 +1191,10 @@ void updateWalls() {
 *  Updates adjacent, unexplored, squares with no walls inbetween with appropriate index numbers and parent numbers
 *  Aslo updates the Explored matrix for the square you are presently in
 *  TODO: Rename this function to something more indicative of what it does
+*  TODO: continue updating starting here
 */
 void updateIndicies() {
-    E[Lx][Ly] = true;
+  E[Lx][Ly] = true;
   if((!Wn[Lx][Ly]) && (Ly < Size)) {
     if(I[Lx][Ly+1] == 0) {
       I[Lx][Ly+1] = I[Lx][Ly]+1;
@@ -1053,7 +1222,7 @@ void updateIndicies() {
 }
 
 /* checkLinearity
-*  Checks to see if there are discrpeancies between the indices of adjacent squares without walls in between them 
+*  Checks to see if there are discrepancies between the indices of adjacent squares without walls in between them 
 *  (i.e A 13 adjacent to a 9 with no wall in between)
 *  If a discrepancy is found correctLinearity is called to fix it
 *  TODO: I beleive checkLinearity might never be called and correctLinearity is called instead
@@ -1190,6 +1359,7 @@ void deadEndSweep() {
 
 // Small functions that returns true if a square is surrounded by only lower indexed squares.
 // Used as a short cut in the dead end sweep.
+// TODO: update this method to use new data
 boolean onlyLowerIndicies(int lx, int ly) {
   int flag = 0;
   if(!getWallNorth(lx, ly)) {
@@ -1809,8 +1979,4 @@ void outputMaze() {
   Serial.println("#");
   Serial.println();
 }
-
-
-
-
 
