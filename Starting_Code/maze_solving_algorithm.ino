@@ -1393,27 +1393,27 @@ boolean onlyLowerIndicies(int lx, int ly) {
   }
 }
 
-// Sweeps through the known maze and sets all virtual walls to true on any square whose Manhattan Distance plus the index is greater than the current index of the center squares.
-//
-void manhattanSweep() {
-  for(int i = 0; i <= Size; i++) {
-    for(int j = 0; j <= Size; j++) {
-      if(I[i][j] != 0) {
-        if(E[i][j] != 0) {
-        if(goneTooFar(i,j)) {
-          if(!isCenter(i,j)) {
-//            Serial.print("Gone Too Far in: ");
-//            Serial.print(i);
-//            Serial.print(", ");
-//            Serial.println(j);
-            setAllVirtualWalls(i,j);
-          }
-        }
-        }
-      }
-    }
-  }
-}
+// Sweeps through the known maze and sets all virtual walls to true on any square whose Manhattan Distance plus the index is greater than the current index of the center squares. 
+ // 
+ void manhattanSweep() { 
+   for(int i = 0; i <= Size; i++) { 
+     for(int j = 0; j <= Size; j++) { 
+       if(I[i][j] != 0) { 
+         if(getExploredBit(i,j) != 0 { 
+         if(goneTooFar(i,j)) { 
+           if(!isCenter(i,j)) { 
+ //            Serial.print("Gone Too Far in: "); 
+ //            Serial.print(i); 
+ //            Serial.print(", "); 
+ //            Serial.println(j); 
+             setAllVirtualWalls(i,j); 
+           } 
+         } 
+         } 
+       } 
+     } 
+   } 
+ } 
 
 
 //checks whether any parent directions point towards walls. If so, corrects parent direction for that square
@@ -1526,125 +1526,125 @@ boolean goneTooFar(int lx, int ly) {
 }
 
 
-// Returns THE direction to move
-// 0 - NORTH
-// 1 - SOUTH
-// 2 - EAST
-// 3 - WEST
-int moveDir() {
-  
-  double smallestMD = 257; // Smallest Manhattan distance variable. Initialized high to check for oddities later
-  int dir = 4; // Direction to move! Arbitrarily initialized at to an INVALID value
-  // CHECKS NORTH
-  if (!getWallNorth(Lx,Ly)) { // If there's not a wall
-    if (!E[Lx][Ly+1]) { // And it's not visited
-      double movesTo = movesToCenter(Lx,Ly+1);
-      if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance
-        smallestMD = movesTo; // It updates the smallest manhattan distance
-        dir = 0; // And sets the relevant direction
-      }
-    }
-  }
-  // CHECKS SOUTH
-  if (!getWallSouth(Lx,Ly)) { // If there's not a wall
-    if (!E[Lx][Ly-1]) { // And it's not visited
-      double movesTo = movesToCenter(Lx,Ly-1);
-      if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance
-        smallestMD = movesTo; // It updates the smallest manhattan distance
-        dir = 1; // And sets the relevant direction
-      }
-    }
-  }
-  // CHECKS EAST
-  if (!getWallEast(Lx,Ly)) { // If there's not a wall
-    if (!E[Lx+1][Ly]) { // And it's not visited
-    double movesTo = movesToCenter(Lx+1,Ly);
-      if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance
-        smallestMD = movesTo; // It updates the smallest manhattan distance
-        dir = 2; // And sets the relevant direction
-      }
-    }
-  }
-  // CHECKS WEST
-  if (!getWallWest(Lx,Ly)) { // If there's not a wall
-    if (!E[Lx-1][Ly]) { // And it's not visited
-      double movesTo = movesToCenter(Lx-1,Ly);
-      if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance
-        smallestMD = movesTo; // It updates the smallest manhattan distance
-        dir = 3; // And sets the relevant direction
-      }
-    }
-  }
-  // CHECKS FOR ODDITIES (There were no unexplored options)
-  if (smallestMD == 257) {
-    //NORTH
-    if (!getWallNorth(Lx,Ly)) { // If there's not a wall
-      if ((I[Lx][Ly]+1) == I[Lx][Ly+1] ) {
-        double movesTo = movesToCenter(Lx,Ly+1);
-        if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance
-          smallestMD = movesTo; // It updates the smallest manhattan distance
-          dir = 0; // And sets the relevant direction
-        }
-      }
-    }
-    //SOUTH
-    if (!getWallSouth(Lx,Ly)) { // If there's not a wall
-      if ((I[Lx][Ly]+1) == I[Lx][Ly-1] ) {
-        double movesTo = movesToCenter(Lx,Ly-1);
-        if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance
-          smallestMD = movesTo; // It updates the smallest manhattan distance
-          dir = 1; // And sets the relevant direction
-        }
-      }
-    }
-    //EAST
-    if (!getWallEast(Lx,Ly)) { // If there's not a wall
-      if ((I[Lx][Ly]+1) == I[Lx+1][Ly] ) {
-        double movesTo = movesToCenter(Lx+1,Ly);
-        if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance
-          smallestMD = movesTo; // It updates the smallest manhattan distance
-          dir = 2; // And sets the relevant direction
-        }
-      }
-    }
-    //WEST
-    if (!getWallWest(Lx,Ly)) { // If there's not a wall
-      if ((I[Lx][Ly]+1) == I[Lx-1][Ly] ) {
-        double movesTo = movesToCenter(Lx-1,Ly);
-        if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance
-          smallestMD = movesTo; // It updates the smallest manhattan distance
-          dir = 3; // And sets the relevant direction
-        }
-      }
-    }
-  }
-  if (smallestMD == 257) {
-    if (!getWallNorth(Lx,Ly)) {
-      dir = 0;
-    }
-    if (!getWallSouth(Lx,Ly)) {
-      dir = 1;
-    }
-    if (!getWallEast(Lx,Ly)) {
-      dir = 2;
-    }
-    if (!getWallWest(Lx,Ly)) {
-      dir = 3;
-    }
-  }
-  
-  if (dir == 4) {
-    while(true) {
-      Serial.print("INVALID MOVE");
-      delay(1000);
-    }
-  }  else{
-
-  //Serial.print(" Direction returned");
-  //Serial.println(dir);
-  return dir; // returns the chosen one
-    }
-}
+// Returns THE direction to move 
+ // 0 - NORTH 
+ // 1 - SOUTH 
+ // 2 - EAST 
+ // 3 - WEST 
+ int moveDir() { 
+    
+   double smallestMD = 257; // Smallest Manhattan distance variable. Initialized high to check for oddities later 
+   int dir = 4; // Direction to move! Arbitrarily initialized at to an INVALID value 
+   // CHECKS NORTH 
+   if (!getWallNorth(Lx,Ly)) { // If there's not a wall 
+     if (!getExploredBit(Lx,Ly+1)) { // And it's not visited 
+   double movesTo = movesToCenter(Lx,Ly+1); 
+       if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
+         smallestMD = movesTo; // It updates the smallest manhattan distance 
+         dir = 0; // And sets the relevant direction 
+       } 
+     } 
+   } 
+   // CHECKS SOUTH 
+   if (!getWallSouth(Lx,Ly)) { // If there's not a wall 
+     if (!getExploredBit(Lx,Ly-1)) { // And it's not visited 
+       double movesTo = movesToCenter(Lx,Ly-1); 
+       if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
+         smallestMD = movesTo; // It updates the smallest manhattan distance 
+         dir = 1; // And sets the relevant direction 
+       } 
+     } 
+   } 
+   // CHECKS EAST 
+   if (!getWallEast(Lx,Ly)) { // If there's not a wall 
+     if (!getExploredBit(Lx+1,Ly)) { // And it's not visited 
+     double movesTo = movesToCenter(Lx+1,Ly); 
+       if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
+         smallestMD = movesTo; // It updates the smallest manhattan distance 
+         dir = 2; // And sets the relevant direction 
+       } 
+     } 
+   } 
+   // CHECKS WEST 
+   if (!getWallWest(Lx,Ly)) { // If there's not a wall 
+     if (!getExploredBit(Lx-1,Ly)) { // And it's not visited 
+       double movesTo = movesToCenter(Lx-1,Ly); 
+       if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
+         smallestMD = movesTo; // It updates the smallest manhattan distance 
+         dir = 3; // And sets the relevant direction 
+       } 
+     } 
+   } 
+   // CHECKS FOR ODDITIES (There were no unexplored options) 
+   if (smallestMD == 257) { 
+     //NORTH 
+     if (!getWallNorth(Lx,Ly)) { // If there's not a wall 
+       if ((I[Lx][Ly]+1) == I[Lx][Ly+1] ) { 
+         double movesTo = movesToCenter(Lx,Ly+1); 
+         if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
+           smallestMD = movesTo; // It updates the smallest manhattan distance 
+           dir = 0; // And sets the relevant direction 
+         } 
+       } 
+     } 
+     //SOUTH 
+     if (!getWallSouth(Lx,Ly)) { // If there's not a wall 
+       if ((I[Lx][Ly]+1) == I[Lx][Ly-1] ) { 
+         double movesTo = movesToCenter(Lx,Ly-1); 
+         if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
+           smallestMD = movesTo; // It updates the smallest manhattan distance 
+           dir = 1; // And sets the relevant direction 
+         } 
+       } 
+     } 
+     //EAST 
+     if (!getWallEast(Lx,Ly)) { // If there's not a wall 
+       if ((I[Lx][Ly]+1) == I[Lx+1][Ly] ) { 
+         double movesTo = movesToCenter(Lx+1,Ly); 
+         if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
+           smallestMD = movesTo; // It updates the smallest manhattan distance 
+           dir = 2; // And sets the relevant direction 
+         } 
+       } 
+     } 
+     //WEST 
+     if (!getWallWest(Lx,Ly)) { // If there's not a wall 
+       if ((I[Lx][Ly]+1) == I[Lx-1][Ly] ) { 
+         double movesTo = movesToCenter(Lx-1,Ly); 
+         if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
+           smallestMD = movesTo; // It updates the smallest manhattan distance 
+           dir = 3; // And sets the relevant direction 
+         } 
+       } 
+     } 
+   } 
+   if (smallestMD == 257) { 
+     if (!getWallNorth(Lx,Ly)) { 
+       dir = 0; 
+     } 
+     if (!getWallSouth(Lx,Ly)) { 
+       dir = 1; 
+     } 
+     if (!getWallEast(Lx,Ly)) { 
+       dir = 2; 
+     } 
+     if (!getWallWest(Lx,Ly)) { 
+       dir = 3; 
+     } 
+   } 
+    
+   if (dir == 4) { 
+     while(true) { 
+       Serial.print("INVALID MOVE"); 
+       delay(1000); 
+     } 
+   }  else{ 
+ 
+   //Serial.print(" Direction returned"); 
+   //Serial.println(dir); 
+   return dir; // returns the chosen one 
+     } 
+ } 
 
 double movesToCenter(int lx,int ly) {
   double movesTo;
@@ -1714,77 +1714,79 @@ void whereDoWeGoNow() {
   }
 }
 
-int goFromStartToSquare(int lx, int ly) {
-  int i = lx;
-  int j = ly;
-  int c = 0;
-
-  while(I[i][j] != 1) {
-    breadCrumbs[c] = readBackwards(P[i][j]);
-    c++;
-    if(P[i][j] == 0) {
-      j=j+1;
-    }
-    else if(P[i][j] == 1) {
-      j=j-1;
-    }
-    else if(P[i][j] == 2) {
-      i= i + 1;
-    }
-    else if(P[i][j] == 3) {
-      i= i - 1;
-    }
-  }
-  //flip breadcrumbs
-  int d = c;
-  int temp = 0;
-  for (int i = 0; i < d; i++) {
-    temp = breadCrumbs[i];
-    breadCrumbs[i] = breadCrumbs[d-1];
-    breadCrumbs[d-1] = temp;
-    d--;
-  }
-//  Serial.println("Breadcrumbs: ");
-//  for(int i = 0; i < c; i++){
-//    Serial.print(breadCrumbs[i]);
-//    Serial.print(", ");
-//  }
-  return c;
-}
-
-int goFromCenterToStart() {
-  //  Serial.println("From Center to Star");
-  //  Serial.println("##############");
-  int i = Lx;
-  int j = Ly;
-  int c =0;
-  while(I[i][j] != 1) {
-    //    Serial.print("Location: ");
-    //    Serial.print(i);
-    //    Serial.print(", ");
-    //    Serial.println(j);
-    //    delay(1000);
-    breadCrumbs[c] = P[i][j];
-    c++;
-    if(P[i][j] == 0) {
-      j=j+1;
-    }
-    else if(P[i][j] == 1) {
-      j=j-1;
-    }
-    else if(P[i][j] == 2) {
-      i= i + 1;
-    }
-    else if(P[i][j] == 3) {
-      i= i - 1;
-    }
-  }
-  Serial.println("From Center to Start");
-  Serial.println("##############");
-  Serial.println(c);
-  return c;
-}
-
+ int goFromStartToSquare(int lx, int ly) { 
+   int i = lx; 
+   int j = ly; 
+   int c = 0; 
+ 
+ 
+   while(I[i][j] != 1) { 
+    breadCrumbs[c] = readBackwards(getParentBit(i,j)); 
+     c++; 
+     if(getParentBit(i,j) == 0) { 
+       j=j+1; 
+     } 
+     else if(getParentBit(i,j) == 1) { 
+       j=j-1; 
+     } 
+     else if(getParentBit(i,j) == 2) { 
+       i= i + 1; 
+     } 
+     else if(getParentBit(i,j) == 3) { 
+       i= i - 1; 
+     } 
+   } 
+   //flip breadcrumbs 
+   int d = c; 
+   int temp = 0; 
+   for (int i = 0; i < d; i++) { 
+     temp = breadCrumbs[i]; 
+     breadCrumbs[i] = breadCrumbs[d-1]; 
+     breadCrumbs[d-1] = temp; 
+     d--; 
+   } 
+ //  Serial.println("Breadcrumbs: "); 
+ //  for(int i = 0; i < c; i++){ 
+ //    Serial.print(breadCrumbs[i]); 
+ //    Serial.print(", "); 
+ //  } 
+   return c; 
+ } 
+ 
+ int goFromCenterToStart() { 
+   //  Serial.println("From Center to Star"); 
+   //  Serial.println("##############"); 
+   int i = Lx; 
+   int j = Ly; 
+   int c =0; 
+   while(I[i][j] != 1) { 
+     //    Serial.print("Location: "); 
+     //    Serial.print(i); 
+     //    Serial.print(", "); 
+     //    Serial.println(j); 
+     //    delay(1000); 
+     breadCrumbs[c] = getParentBit(i,j); 
+     c++; 
+     if(getParentBit(i,j) == 0) { 
+       j=j+1; 
+     } 
+     else if(getParentBit(i,j) == 1) { 
+       j=j-1; 
+     } 
+     else if(getParentBit(i,j) == 2) { 
+       i= i + 1; 
+     } 
+     else if(getParentBit(i,j) == 3) { 
+       i= i - 1; 
+     } 
+   } 
+   Serial.println("From Center to Start"); 
+   Serial.println("##############"); 
+   Serial.println(c); 
+   return c; 
+ }
+ 
+ 
 void hanselAndGretel(int c) {
   for(int i = 0; i < c; i++) {
     Serial.println("In hansel and gretel");
@@ -1800,6 +1802,7 @@ boolean foundShortest() {
       if(getExploreBit(i,j)) {
         if(numberOfWalls(i,j) != 4) {
           if(!getWallNorth(i,j)) {
+              //WHY IS THRE A 7 HERE?????
             if(j<7) {
               if(!getExploreBit(i)(j+1)) {
                 return false;
