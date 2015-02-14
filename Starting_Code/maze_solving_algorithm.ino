@@ -1399,7 +1399,7 @@ boolean onlyLowerIndicies(int lx, int ly) {
    for(int i = 0; i <= Size; i++) { 
      for(int j = 0; j <= Size; j++) { 
        if(I[i][j] != 0) { 
-         if(getExploredBit(i,j) != 0 { 
+         if(getExploredBit(i,j) != 0) { 
          if(goneTooFar(i,j)) { 
            if(!isCenter(i,j)) { 
  //            Serial.print("Gone Too Far in: "); 
@@ -1679,7 +1679,7 @@ void whereDoWeGoNow() {
   int lowestLy = Size+1;
   for(int i = 0; i <= Size; i++) {
     for(int j = 0; j <=Size; j++) {
-      if(!getExploreBit(i,j)) {
+      if(!getExploredBit(i,j)) {
         if(!isCenter(i,j)) {
         if(!goneTooFar(i,j)){
         if(numberOfWalls(i,j)!=4) {
@@ -1799,33 +1799,33 @@ void hanselAndGretel(int c) {
 boolean foundShortest() {
   for(int i = 0; i <= Size; i++) {
     for(int j = 0; j <= Size; j++) {
-      if(getExploreBit(i,j)) {
+      if(getExploredBit(i,j)) {
         if(numberOfWalls(i,j) != 4) {
           if(!getWallNorth(i,j)) {
               //WHY IS THRE A 7 HERE?????
             if(j<7) {
-              if(!getExploreBit(i)(j+1)) {
+              if(!getExploredBit(i,j+1)) {
                 return false;
               }
             }
           }
           if(!getWallSouth(i,j)) {
             if(j>1) {
-              if(!getExploreBit(i)(j-1)) {
+              if(!getExploredBit(i,j-1)) {
                 return false;
               }
             }
           }
           if(!getWallEast(i,j)) {
             if(i<7) {
-              if(!getExploreBit(i+1)(j)) {
+              if(!getExploredBit(i+1,j)) {
                 return false;
               }
             }
           }
           if(!getWallWest(i,j)) {
             if(j>1) {
-              if(!getExploreBit(i-1)(j)) {
+              if(!getExploredBit(i-1,j)) {
                 return false;
               }
             }
