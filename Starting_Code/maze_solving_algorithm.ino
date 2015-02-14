@@ -1177,38 +1177,51 @@ void updateWalls()
 //}
 
 
+
 /* updateIndices
 *  Updates adjacent, unexplored, squares with no walls inbetween with appropriate index numbers and parent numbers
 *  Aslo updates the Explored matrix for the square you are presently in
-*  TODO: Rename this function to something more indicative of what it does
-*  TODO: continue updating starting here
 */
-void updateIndicies() {
-  E[Lx][Ly] = true;
-  if((!Wn[Lx][Ly]) && (Ly < Size)) {
-    if(I[Lx][Ly+1] == 0) {
-      I[Lx][Ly+1] = I[Lx][Ly]+1;
-      P[Lx][Ly+1] = 1;
+void updateIndicies()
+{
+  setExploredBit(Lx, Ly); //current square is explored
+  
+  if ((!getWallBitNorth) && (Ly < Size))
+  {
+    if (I[Lx][Ly + 1] == 0)
+    {
+      I[Lx][Ly] = I[Lx][Ly] + 1;
+      setParentBit(Lx, Ly, 1);
     }
   }
-  if((!Ws[Lx][Ly]) && (Ly > 0)) {
-    if(I[Lx][Ly-1] == 0) {
-      I[Lx][Ly-1] = I[Lx][Ly]+1;
-      P[Lx][Ly-1] = 0;
+  
+  if ((!getWallBitSouth) && (Ly > 0))
+  {
+    if (I[Lx][Ly + 1] == 0)
+    {
+      I[Lx][Ly - 1] = I[Lx][Ly] + 1;
+      setParentBit(Lx, Ly, 1);
     }
   }
-  if((!Ww[Lx][Ly]) && (Lx > 0)) {
-    if(I[Lx-1][Ly] == 0) {
+  
+  if((!getWallBitWest) && (Lx > 0)) 
+  {
+    if(I[Lx-1][Ly] == 0) 
+    {
       I[Lx-1][Ly] = I[Lx][Ly]+1;
-      P[Lx-1][Ly] = 2;
+      setParentBit(Lx-1, Ly, 2); 
     }
   }
-  if((!We[Lx][Ly]) && (Lx < Size)) {
-    if(I[Lx+1][Ly] == 0) {
+  
+  if((!getWallBitEast) && (Lx < Size)) 
+  {
+    if(I[Lx+1][Ly] == 0) 
+    {
       I[Lx+1][Ly] = I[Lx][Ly]+1;
-      P[Lx+1][Ly] = 3;
+      setParentBit(Lx+1, Ly, 3);
     }
   }
+  
 }
 
 /* checkLinearity
@@ -1244,6 +1257,7 @@ void checkLinearity() {
   }
 }
 
+
 /* correctLinearity
 *  Checks to see if there are discrpeancies between the indices of adjacent squares without walls in between them 
 *  (i.e A 13 adjacent to a 9 with no wall in between)
@@ -1258,9 +1272,9 @@ void correctLinearity() {
     flag = false;
     for (int i = 0; i <= Size; i ++) {      //Loop through the maze
       for (int j = 0; j <= Size; j++) {
-        if (E[i][j]) {                      //We are only concerned with the linearity of explored squares as they are the only squares where we know where the walls are
+        if (getExploredBit(i, j)) {                      //We are only concerned with the linearity of explored squares as they are the only squares where we know where the walls are
           // North Wall
-          if (!Wn[i][j]) {
+          if (!getWallNorth(i, j)) {
             if ((I[i][j] - I[i][j+1]) > 1) {
               I[i][j] = I[i][j+1]+1;        //If there is a wall to the North with lower 
               flag = true;
@@ -1271,7 +1285,7 @@ void correctLinearity() {
             }
           }
           // South Wall
-          if (!Ws[i][j]) {
+          if (!getWallSouth(i, j)) {
             if ((I[i][j] - I[i][j-1]) > 1) {
               I[i][j] = I[i][j-1]+1;
               flag = true;
@@ -1282,7 +1296,7 @@ void correctLinearity() {
             }
           }
           // West Wall
-          if (!Ww[i][j]) {
+          if (!getWallWest(i, j)) {
             if ((I[i][j] - I[i-1][j]) > 1) {
               I[i][j] = I[i-1][j]+1;
               flag = true;
@@ -1293,7 +1307,7 @@ void correctLinearity() {
             }
           }
           // East Wall
-          if (!We[i][j]) {
+          if (!getWallEast(i, j)) {
             if ((I[i][j] - I[i+1][j]) > 1) {
               I[i][j] = I[i+1][j]+1;
               flag = true;
@@ -1349,7 +1363,6 @@ void deadEndSweep() {
 
 // Small functions that returns true if a square is surrounded by only lower indexed squares.
 // Used as a short cut in the dead end sweep.
-// TODO: update this method to use new data
 boolean onlyLowerIndicies(int lx, int ly) {
   int flag = 0;
   if(!getWallNorth(lx, ly)) {
@@ -1402,47 +1415,50 @@ void manhattanSweep() {
   }
 }
 
-  void parentSweep() {
+
+//checks whether any parent directions point towards walls. If so, corrects parent direction for that square
+void parentSweep()
+{
   Serial.print("Correcting Parents: ");
   for(int lx = 0; lx <= Size; lx++) {
     for(int ly = 0; ly <= Size; ly++) {
   if (lx>Size) {
   } else if (ly>Size) {
-    
+    //do nothing
   }else if(isCenter(lx,ly)){
    //do nothing
   } else {
   if(!getWallNorth(lx,ly)) {
     if(ly < Size){
       if((I[lx][ly]-1) == I[lx][ly+1]) {
-        P[lx][ly] = 0;
+        setParentBit(lx, ly, 0);
       }
     }
   }
   if(!getWallSouth(lx,ly)) {
     if(ly > 0){
       if((I[lx][ly]-1) == I[lx][ly-1]) {
-        P[lx][ly] = 1;
+        setParentBit(lx, ly, 1);
       }
     }
   }
   if(!getWallEast(lx,ly)) {
     if(lx < Size){
       if((I[lx][ly]-1) == I[lx+1][ly]) {
-        P[lx][ly] = 2;
+        setParentBit(lx, ly, 2);
       }
     }
   }
   if(!getWallWest(lx,ly)) {
     if(lx > 0){
       if((I[lx][ly]-1) == I[lx-1][ly]) {
-        P[lx][ly] = 3;
+        setParentBit(lx, ly, 3);
       }
     }
   }
     }
     }
-  }
+  } 
 }
 
 // Small function that returns the number of walls(virtual or real) the specified square has
@@ -1466,13 +1482,15 @@ int numberOfWalls(int lx, int ly) {
 
 //Sets all the virtual walls of the specified square to true
 //Used in the dead end sweep
+//now up-to-date with new method
 void setAllVirtualWalls(int lx, int ly) {
   //  Serial.print("Setting Virtual walls");
   if(!isCenter(lx,ly)) {
-    setVirtualNorthWall(lx,ly);
-    setVirtualSouthWall(lx,ly);
-    setVirtualWestWall(lx,ly);
-    setVirtualEastWall(lx,ly);
+    //setVirtualNorthWall(lx,ly); virtual walls no longer set individually
+    //setVirtualSouthWall(lx,ly);
+    //setVirtualWestWall(lx,ly);
+    //setVirtualEastWall(lx,ly);
+    setVirtualWallsBit(lx, ly); //now does all four of the above
   }
 }
 
