@@ -671,7 +671,6 @@ boolean getVirtualWallsBit(int lx, int ly)
 /* initializeParents
 *  Initializes the parents array to all fours (Since four is an invalid number for a parent if the four is ever used an runtime error will occur)
 *  This method also initializes whereToGo to Size+1, again an invalid number
-*  TODO: Figure out a better way to initialize these values instead of using an invalid number
 */
 void initializeParents() {
   Serial.println("Initialize Parents");
@@ -752,8 +751,8 @@ void initializeWalls() {
 /*  destroyVirtualWalls
  *  Sets all virtual walls to zero in the entire matrix
  *  Also, used to initialize the virtual walls
- *  this is now carried out in initializeSquareData()
- */
+ *  this is now carried out once initializeSquareData()
+ *
 void destroyVirtualWalls() {
   for (int i = 0; i <= Size; i++) {
     for (int j = 0; j <= Size; j++) {
@@ -764,6 +763,22 @@ void destroyVirtualWalls() {
     }
   }
 }
+*/
+
+void destroyVirtualWalls()
+{
+  for (int i = 0; i <= Size; i++) 
+  {
+    for (int j = 0; j <= Size; j++) 
+    {
+      setVirtualWallsBit(i, j, false); //removes virtual walls from each square
+    }
+  }
+  
+}
+
+
+
 
 /* isCenter
 *  Returns true if the robot is physically in one of the four center squares
@@ -806,35 +821,28 @@ void visitCenter(){
   //Figure out the matrix indices for all the center squares
   int low = (Size/2);
   int high = (Size/2)+1;
-
   //Even though we haven't technically explored all the center squares we know everything about them so we can say we've explored them all
   E[low][low] = 1;
   E[low][high] = 1;
   E[high][low] = 1;
   E[high][high] = 1;
-
   //Sets all the physical walls of all four of the center squares to true
   setNorthWall(low,low);
   setSouthWall(low,low);
   setEastWall(low,low);
   setWestWall(low,low);
-
   setNorthWall(low,high);
   setSouthWall(low,high);
   setEastWall(low,high);
   setWestWall(low,high); 
-
   setNorthWall(high,high);
   setSouthWall(high,high);
   setEastWall(high,high);
   setWestWall(high,high); 
-
-
   setNorthWall(high,low);
   setSouthWall(high,low);
   setEastWall(high,low);
   setWestWall(high,low); 
-
   //Sets the "destination square" to our current location
   finalCenterSquare[0]=Lx;
   finalCenterSquare[1]=Ly;
@@ -876,10 +884,10 @@ void visitCenter()
   int high = (Size/2)+1;
 
   //Even though we haven't technically explored all the center squares we know everything about them so we can say we've explored them all
-  bitSet(squareData[low][low], 0);
-  bitSet(squareData[low][high], 0);
-  bitSet(squareData[high][low], 0);
-  bitSet(squareData[high][high], 0);
+  setExploredBit(low, low);
+  setExploredBit(low, high);
+  setExploredBit(high, low);
+  setExploredBit(high, high);
 
   
   //Sets all the physical walls of all four of the center squares to true
@@ -990,6 +998,7 @@ int numberOfWalls(){
 }
 */
 
+
 /* numberOfWalls
 *  Never used, instead the two parameter function is used in dead end sweep
 *
@@ -1021,7 +1030,8 @@ int numberOfWalls(int x){
  * The set wall methods should always be used when mapping walls as the set the walls of the square you are in as well 
  * as the complementary walls of the adjacent squares
  * For example setting the west wall of one square will set the east wall of the adjacent square to the west
- * obsolete with new set methods
+ * now updated to call new methods (see below)
+ *
 void setNorthWall(int lx, int ly) {
   Serial.print("Setting North Wall; ");
   Wn[lx][ly] = true;
@@ -1029,7 +1039,6 @@ void setNorthWall(int lx, int ly) {
     Ws[lx][ly+1] = true;
   }
 }
-
 void setSouthWall(int lx, int ly) {
   Serial.print("Setting South Wall; ");
   Ws[lx][ly] = true;
@@ -1037,7 +1046,6 @@ void setSouthWall(int lx, int ly) {
     Wn[lx][ly-1] = true;
   }
 }
-
 void setWestWall(int lx, int ly) {
   Serial.print("Setting West Wall; ");
   Ww[lx][ly] = true;
@@ -1045,7 +1053,6 @@ void setWestWall(int lx, int ly) {
     We[lx-1][ly] = true;
   }
 }
-
 void setEastWall(int lx, int ly) {
   Serial.print("Setting East Wall; ");
   We[lx][ly] = true;
@@ -1055,11 +1062,35 @@ void setEastWall(int lx, int ly) {
 }
 */
 
+/* set****Wall (updated)
+ * The set wall methods should always be used when mapping walls as the set the walls of the square you are in as well 
+ * as the complementary walls of the adjacent squares
+ * For example setting the west wall of one square will set the east wall of the adjacent square to the west
+ */
+void setNorthWall(int lx, int ly) {
+  Serial.print("Setting North Wall; ");
+  setWallBitNorth(lx, ly);
+}
+void setSouthWall(int lx, int ly) {
+  Serial.print("Setting South Wall; ");
+  setWallBitSouth(lx, ly);
+}
+void setWestWall(int lx, int ly) {
+  Serial.print("Setting West Wall; ");
+  setWallBitWest(lx, ly);
+}
+void setEastWall(int lx, int ly) {
+  Serial.print("Setting East Wall; ");
+  setWallBitEast(lx, ly);
+}
+
+
+
 
 /* setVirtual*****Wall
 *  Performs the same task as the normal set wall method but with virtual walls
-*  obsolete due to new set method
-*/
+*  obsolete due to new set method (and virtual walls are always done all at once now)
+*
 void setVirtualNorthWall(int lx, int ly) {
   vWn[lx][ly] = true;
   if(ly < Size) {
@@ -1087,6 +1118,7 @@ void setVirtualEastWall(int lx, int ly) {
     vWw[lx+1][ly] = true;
   }
 }
+*/
 
 
 /* getWall****
@@ -1190,9 +1222,8 @@ void updateWalls()
 /* updateIndices
 *  Updates adjacent, unexplored, squares with no walls inbetween with appropriate index numbers and parent numbers
 *  Aslo updates the Explored matrix for the square you are presently in
-*  TODO: Rename this function to something more indicative of what it does
-*  TODO: continue updating starting here
-*/
+*  
+*
 void updateIndicies() {
   E[Lx][Ly] = true;
   if((!Wn[Lx][Ly]) && (Ly < Size)) {
@@ -1220,13 +1251,59 @@ void updateIndicies() {
     }
   }
 }
+*/
 
+/* updateIndices
+*  Updates adjacent, unexplored, squares with no walls inbetween with appropriate index numbers and parent numbers
+*  Aslo updates the Explored matrix for the square you are presently in
+*/
+void updateIndicies()
+{
+  setExploredBit(Lx, Ly); //current square is explored
+  
+  if ((!getWallBitNorth) && (Ly < Size))
+  {
+    if (I[Lx][Ly + 1] == 0)
+    {
+      I[Lx][Ly] = I[Lx][Ly] + 1;
+      setParentBit(Lx, Ly, 1);
+    }
+  }
+  
+  if ((!getWallBitSouth) && (Ly > 0))
+  {
+    if (I[Lx][Ly + 1] == 0)
+    {
+      I[Lx][Ly - 1] = I[Lx][Ly] + 1;
+      setParentBit(Lx, Ly, 1);
+    }
+  }
+  
+  if((!getWallBitWest) && (Lx > 0)) 
+  {
+    if(I[Lx-1][Ly] == 0) 
+    {
+      I[Lx-1][Ly] = I[Lx][Ly]+1;
+      setParentBit(Lx-1, Ly, 2); 
+    }
+  }
+  
+  if((!getWallBitEast) && (Lx < Size)) 
+  {
+    if(I[Lx+1][Ly] == 0) 
+    {
+      I[Lx+1][Ly] = I[Lx][Ly]+1;
+      setParentBit(Lx+1, Ly, 3);
+    }
+  }
+  
+}
 /* checkLinearity
 *  Checks to see if there are discrepancies between the indices of adjacent squares without walls in between them 
 *  (i.e A 13 adjacent to a 9 with no wall in between)
 *  If a discrepancy is found correctLinearity is called to fix it
 *  TODO: I beleive checkLinearity might never be called and correctLinearity is called instead
-*/
+*
 void checkLinearity() {
   if (!Wn[Lx][Ly]) {
     if(abs(I[Lx][Ly]-I[Lx][Ly+1]) > 1) {
@@ -1253,12 +1330,13 @@ void checkLinearity() {
     }
   }
 }
+*/
 
 /* correctLinearity
 *  Checks to see if there are discrpeancies between the indices of adjacent squares without walls in between them 
 *  (i.e A 13 adjacent to a 9 with no wall in between)
 *  If a discrepancy is found it will be corrected and linearity will be restored
-*/
+*
 void correctLinearity() {
   //Serial.println("Correcting Linearity");
   //We must get rid of all the virtual walls because after the linearity correction paths that were previously ruled out might be viable
@@ -1318,6 +1396,75 @@ void correctLinearity() {
     }
   }
 }
+*/
+
+/* correctLinearity
+*  Checks to see if there are discrpeancies between the indices of adjacent squares without walls in between them 
+*  (i.e A 13 adjacent to a 9 with no wall in between)
+*  If a discrepancy is found it will be corrected and linearity will be restored
+*/
+void correctLinearity() {
+  //Serial.println("Correcting Linearity");
+  //We must get rid of all the virtual walls because after the linearity correction paths that were previously ruled out might be viable
+  destroyVirtualWalls();    
+  boolean flag = true;      //Set a boolean flag which will cause correct linearity to keep looping until the entire maze is linear
+  while(flag) {
+    flag = false;
+    for (int i = 0; i <= Size; i ++) {      //Loop through the maze
+      for (int j = 0; j <= Size; j++) {
+        if (getExploredBit(i, j)) {                      //We are only concerned with the linearity of explored squares as they are the only squares where we know where the walls are
+          // North Wall
+          if (!getWallNorth(i, j)) {
+            if ((I[i][j] - I[i][j+1]) > 1) {
+              I[i][j] = I[i][j+1]+1;        //If there is a wall to the North with lower 
+              flag = true;
+            }
+            else if (((I[i][j] - I[i][j+1]) < -1)) {
+              I[i][j+1] = I[i][j]+1;
+              flag = true;
+            }
+          }
+          // South Wall
+          if (!getWallSouth(i, j)) {
+            if ((I[i][j] - I[i][j-1]) > 1) {
+              I[i][j] = I[i][j-1]+1;
+              flag = true;
+            }
+            else if (((I[i][j] - I[i][j-1]) < -1)) {
+              I[i][j-1] = I[i][j]+1;
+              flag = true;
+            }
+          }
+          // West Wall
+          if (!getWallWest(i, j)) {
+            if ((I[i][j] - I[i-1][j]) > 1) {
+              I[i][j] = I[i-1][j]+1;
+              flag = true;
+            }
+            else if (((I[i][j] - I[i-1][j]) < -1)) {
+              I[i-1][j] = I[i][j]+1;
+              flag = true;
+            }
+          }
+          // East Wall
+          if (!getWallEast(i, j)) {
+            if ((I[i][j] - I[i+1][j]) > 1) {
+              I[i][j] = I[i+1][j]+1;
+              flag = true;
+            }
+            else if (((I[i][j] - I[i+1][j]) < -1)) {
+              I[i+1][j] = I[i][j]+1;
+              flag = true;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+
 
 
 /* Dead end sweep will look for all squares that have 3 walls, virtual or real, and then set all 4 virtual walls of that square true
@@ -1357,9 +1504,11 @@ void deadEndSweep() {
   }
 }
 
+
+
+
 // Small functions that returns true if a square is surrounded by only lower indexed squares.
 // Used as a short cut in the dead end sweep.
-// TODO: update this method to use new data
 boolean onlyLowerIndicies(int lx, int ly) {
   int flag = 0;
   if(!getWallNorth(lx, ly)) {
@@ -1391,7 +1540,6 @@ boolean onlyLowerIndicies(int lx, int ly) {
 }
 
 // Sweeps through the known maze and sets all virtual walls to true on any square whose Manhattan Distance plus the index is greater than the current index of the center squares.
-//
 void manhattanSweep() {
   for(int i = 0; i <= Size; i++) {
     for(int j = 0; j <= Size; j++) {
@@ -1412,7 +1560,10 @@ void manhattanSweep() {
   }
 }
 
-  void parentSweep() {
+
+//checks whether any parent directions point towards walls. If so, corrects parent direction for that square
+/*
+void parentSweep() {
   Serial.print("Correcting Parents: ");
   for(int lx = 0; lx <= Size; lx++) {
     for(int ly = 0; ly <= Size; ly++) {
@@ -1454,6 +1605,53 @@ void manhattanSweep() {
     }
   }
 }
+*/
+
+//checks whether any parent directions point towards walls. If so, corrects parent direction for that square
+void parentSweep()
+{
+  Serial.print("Correcting Parents: ");
+  for(int lx = 0; lx <= Size; lx++) {
+    for(int ly = 0; ly <= Size; ly++) {
+  if (lx>Size) {
+  } else if (ly>Size) {
+    //do nothing
+  }else if(isCenter(lx,ly)){
+   //do nothing
+  } else {
+  if(!getWallNorth(lx,ly)) {
+    if(ly < Size){
+      if((I[lx][ly]-1) == I[lx][ly+1]) {
+        setParentBit(lx, ly, 0);
+      }
+    }
+  }
+  if(!getWallSouth(lx,ly)) {
+    if(ly > 0){
+      if((I[lx][ly]-1) == I[lx][ly-1]) {
+        setParentBit(lx, ly, 1);
+      }
+    }
+  }
+  if(!getWallEast(lx,ly)) {
+    if(lx < Size){
+      if((I[lx][ly]-1) == I[lx+1][ly]) {
+        setParentBit(lx, ly, 2);
+      }
+    }
+  }
+  if(!getWallWest(lx,ly)) {
+    if(lx > 0){
+      if((I[lx][ly]-1) == I[lx-1][ly]) {
+        setParentBit(lx, ly, 3);
+      }
+    }
+  }
+    }
+    }
+  } 
+}
+
 
 // Small function that returns the number of walls(virtual or real) the specified square has
 // Used in the deadEndSweep function
@@ -1476,13 +1674,15 @@ int numberOfWalls(int lx, int ly) {
 
 //Sets all the virtual walls of the specified square to true
 //Used in the dead end sweep
+//now up-to-date with new method
 void setAllVirtualWalls(int lx, int ly) {
   //  Serial.print("Setting Virtual walls");
   if(!isCenter(lx,ly)) {
-    setVirtualNorthWall(lx,ly);
-    setVirtualSouthWall(lx,ly);
-    setVirtualWestWall(lx,ly);
-    setVirtualEastWall(lx,ly);
+    //setVirtualNorthWall(lx,ly); virtual walls no longer set individually
+    //setVirtualSouthWall(lx,ly);
+    //setVirtualWestWall(lx,ly);
+    //setVirtualEastWall(lx,ly);
+    setVirtualWallsBit(lx, ly); //now does all four of the above
   }
 }
 
@@ -1979,4 +2179,3 @@ void outputMaze() {
   Serial.println("#");
   Serial.println();
 }
-
