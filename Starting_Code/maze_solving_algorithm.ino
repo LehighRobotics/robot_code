@@ -1,8 +1,9 @@
+
 //#include <MemoryFree.h>
 int counter = 0;
 byte Lx = 0; // Current X coordinate
 byte Ly = 0; // Current Y coordinate
-const int Size = 7;
+const int Size = 8;
 byte centMin = 255; // The smallest index in the center square that has been found so far (the LENGTH of the current shortest path)
 
 //TODO: continue writing methods to manipulate squareData and replace old arrays
@@ -36,6 +37,7 @@ byte whereToGo[2];
 byte finalCenterSquare[2]; //holds the destination final center square
 byte breadCrumbs[((Size+1)^2)];
 byte finishToStartDirections[((Size+1)^2)];
+
 
 
 byte testSize = Size;
@@ -213,20 +215,23 @@ void setup() {
 
 
 void loop() {
- int timed = 250;
+ int timed = 150;
+ //setExploredBit(7, 1, false); //unexplore random-ass square
   while(!isCenter()) {
+    correctLinearity();
     updateWalls();
     Serial.println("update walls");
     outputMaze();
     delay(timed);
-    Serial.println("update Indicies");
-    Serial.println(getWallBitNorth(0,0));
-    Serial.println(getWallBitEast(0,0));
-    updateIndicies();
-    outputMaze();
-    delay(timed);
+    
     Serial.println("Correct Linearity)");
     correctLinearity();
+    outputMaze();
+    delay(timed);
+    Serial.println("update Indicies");
+    //Serial.println(getWallBitNorth(0,0));
+    //Serial.println(getWallBitEast(0,0));
+    updateIndicies();
     outputMaze();
     delay(timed);
     Serial.println("Update CentMIN)");
@@ -356,7 +361,7 @@ void initializeSquareData()
   //Set South walls
   for (int q = 0; q <= Size; q++)
   {
-    bitSet(squareData[0][q] ,4);
+    bitSet(squareData[q][0] ,4);
   }
   
   //Set North walls
@@ -368,7 +373,7 @@ void initializeSquareData()
   //Set West walls
   for (int q = 0; q <= Size; q++)
   {
-    bitSet(squareData[q][0] ,6);
+    bitSet(squareData[0][q] ,6);
   }
   
   //Set East walls
@@ -385,6 +390,11 @@ void initializeSquareData()
 */
 void setExploredBit(int lx, int ly)
 {
+  Serial.print("Square ");
+  Serial.print(lx);
+  Serial.print(" ");
+  Serial.print(ly);
+  Serial.print(" is being explored\n");
    bitSet(squareData[lx][ly], 0);
 }
 
@@ -700,6 +710,57 @@ boolean getVirtualWallsBit(int lx, int ly)
 
 }
 
+boolean getWallN(int lx,int ly) {
+    
+    if (getWallBitNorth(lx, ly)) {
+       return true;
+    }
+    else if (ly < Size-1) {   
+  if( getVirtualWallsBit(lx,ly+1)){
+    return true;
+  }
+}
+return false;
+}
+
+boolean getWallS(int lx,int ly) {
+    
+    if (getWallBitSouth(lx, ly)) {
+       return true;
+    }
+    else if ((ly > 0)) {   
+  if( getVirtualWallsBit(lx,ly-1)){
+    return true;
+  }
+}
+return false;
+}
+
+boolean getWallE(int lx,int ly) {
+    
+    if (getWallBitEast(lx, ly)) {
+       return true;
+    }
+    else if ((lx < Size-1)) {   
+  if( getVirtualWallsBit(lx+1,ly)){
+    return true;
+  }
+}
+return false;
+}
+
+boolean getWallW(int lx,int ly) {
+    
+    if (getWallBitWest(lx, ly)) {
+       return true;
+    }
+    else if ((lx > 0)) {   
+  if( getVirtualWallsBit(lx-1,ly)){
+    return true;
+  }
+}
+return false;
+}
 
 /* initializeParents
 *  Initializes the parents array to all fours (Since four is an invalid number for a parent if the four is ever used an runtime error will occur)
@@ -1241,7 +1302,7 @@ void updateIndicies()
 {
   setExploredBit(Lx, Ly); //current square is explored
   
-  if ((!getWallBitNorth(Lx, Ly)) && (Ly < Size))
+  if ((!getWallN(Lx, Ly)) && (Ly < Size))
   {
     if (I[Lx][Ly + 1] == 0)
     {
@@ -1250,7 +1311,7 @@ void updateIndicies()
     }
   }
   
-  if ((!getWallBitSouth(Lx, Ly)) && (Ly > 0))
+  if ((!getWallS(Lx, Ly)) && (Ly > 0))
   {
     if (I[Lx][Ly - 1] == 0)
     {
@@ -1259,7 +1320,7 @@ void updateIndicies()
     }
   }
   
-  if((!getWallBitWest(Lx, Ly)) && (Lx > 0)) 
+  if((!getWallW(Lx, Ly)) && (Lx > 0)) 
   {
     if(I[Lx-1][Ly] == 0) 
     {
@@ -1268,7 +1329,7 @@ void updateIndicies()
     }
   }
   
-  if((!getWallBitEast(Lx, Ly)) && (Lx < Size)) 
+  if((!getWallE(Lx, Ly)) && (Lx < Size)) 
   {
     if(I[Lx+1][Ly] == 0) 
     {
@@ -1323,7 +1384,7 @@ void checkLinearity() {
 void correctLinearity() {
   //Serial.println("Correcting Linearity");
   //We must get rid of all the virtual walls because after the linearity correction paths that were previously ruled out might be viable
-  destroyVirtualWalls();    
+  //destroyVirtualWalls();    
   boolean flag = true;      //Set a boolean flag which will cause correct linearity to keep looping until the entire maze is linear
   while(flag) {
     flag = false;
@@ -1331,49 +1392,68 @@ void correctLinearity() {
       for (int j = 0; j <= Size; j++) {
         if (getExploredBit(i, j)) {                      //We are only concerned with the linearity of explored squares as they are the only squares where we know where the walls are
           // North Wall
-          if (!getWallBitNorth(i, j)&&getExploredBit(i,j+1)) {
-            if ((I[i][j] - I[i][j+1]) > 1) {
-              I[i][j] = I[i][j+1]+1;        //If there is a wall to the North with lower 
-              flag = true;
-            }
-            else if (((I[i][j] - I[i][j+1]) < -1)) {
-              I[i][j+1] = I[i][j]+1;
-              flag = true;
+          if (j < Size)        //don't look to the north if we are at the top of the maze 
+          {
+            if (!getWallN(i, j)&&getExploredBit(i,j+1)) {
+              if ((I[i][j] - I[i][j+1]) > 1) {
+                I[i][j] = I[i][j+1]+1;        //If there is a wall to the North with lower 
+                flag = true;
+              }
+              else if (((I[i][j] - I[i][j+1]) < -1)) {
+                I[i][j+1] = I[i][j]+1;
+                flag = true;
+              }
             }
           }
           // South Wall
-          if (!getWallBitSouth(i, j)&&getExploredBit(i,j-1)) {
-            if ((I[i][j] - I[i][j-1]) > 1) {
-              I[i][j] = I[i][j-1]+1;
-              flag = true;
-            }
-            else if (((I[i][j] - I[i][j-1]) < -1)) {
-              I[i][j-1] = I[i][j]+1;
-              flag = true;
+          if (j > 0)                   //don't look to the south if we are at the bottom of the maze 
+          {
+            if (!getWallS(i, j)&&getExploredBit(i,j-1)) {
+              if ((I[i][j] - I[i][j-1]) > 1) {
+                I[i][j] = I[i][j-1]+1;
+                flag = true;
+              }
+              else if (((I[i][j] - I[i][j-1]) < -1)) {
+                I[i][j-1] = I[i][j]+1;
+                flag = true;
+              }
             }
           }
           // West Wall
-          if (!getWallBitWest(i, j)&&getExploredBit(i-1,j)) {
-            if ((I[i][j] - I[i-1][j]) > 1) {
-              I[i][j] = I[i-1][j]+1;
-              flag = true;
-            }
-            else if (((I[i][j] - I[i-1][j]) < -1)) {
-              I[i-1][j] = I[i][j]+1;
-              flag = true;
+          if (i  > 0)                //don't look to the west if we are at the left edge of the maze 
+          {
+            if (!getWallW(i, j)&&getExploredBit(i-1,j)) {
+              if ((I[i][j] - I[i-1][j]) > 1) {
+                I[i][j] = I[i-1][j]+1;
+                flag = true;
+              }
+              else if (((I[i][j] - I[i-1][j]) < -1)) {
+                I[i-1][j] = I[i][j]+1;
+                flag = true;
+              }
             }
           }
+          
+          
           // East Wall
-          if (!getWallBitEast(i, j)&&getExploredBit(i+1,j)) {
-            if ((I[i][j] - I[i+1][j]) > 1) {
-              I[i][j] = I[i+1][j]+1;
-              flag = true;
-            }
-            else if (((I[i][j] - I[i+1][j]) < -1)) {
-              I[i+1][j] = I[i][j]+1;
-              flag = true;
+          if (i < Size)            //don't look to the north if we are at the top of the maze 
+          {
+            if (!getWallE(i, j)&&getExploredBit(i+1,j)) {
+              if ((I[i][j] - I[i+1][j]) > 1) {
+                I[i][j] = I[i+1][j]+1;
+                flag = true;
+              }
+              else if (((I[i][j] - I[i+1][j]) < -1)) {
+                I[i+1][j] = I[i][j]+1;
+                flag = true;
+              }
             }
           }
+          
+          
+          
+          
+          
         }
       }
     }
@@ -1390,25 +1470,39 @@ void correctLinearity() {
  */
 void deadEndSweep() {
   //First let's run throgh and find any squares that have three walls set
+  Serial.print("Current Location: ");
+  Serial.print(Lx);
+  Serial.print(Ly);
+  Serial.print("\n");
   boolean flag = true;
   while(flag) {
     flag = false; 
-    for (int i = 0; i <= Size; i ++) {
+    for (int i = 0; i <= Size; i++) {
       for (int j = 0; j <= Size; j++) {
         if ((I[i][j] != 1) && !((Lx == i)&&(Ly == j)) && (!isCenter(i,j))) {
-          //          if(numberOfWalls(i,j) == 3) {
-          //            Serial.print(" Three Walls in: ");
-          //            Serial.print(i);
-          //            Serial.print(" ,");
-          //            Serial.println(j);
-          //            setAllVirtualWalls(i,j);
-          //            flag = true;
-          //          }
+                    if(numberOfWalls(i,j) == 3) {
+                      Serial.print(" Three Walls in: ");
+                      Serial.print(i);
+                      Serial.print(" ,");
+                      Serial.println(j);
+                      
+                      Serial.println("Virtual walls: ");
+                      Serial.println(getVirtualWallsBit(i, j));
+                      
+                      Serial.println("N, S, E, W: ");
+                      Serial.println(getWallN(i ,j));
+                      Serial.println(getWallS(i, j));
+                      Serial.println(getWallE(i, j));
+                      Serial.println(getWallW(i, j));
+                      
+                      setAllVirtualWalls(i,j);
+                      flag = true;
+                    }
           if(onlyLowerIndicies(i,j)) {
-//            Serial.print(" Only lower indexes in: ");
-//            Serial.print(i);
-//            Serial.print(" ,");
-//            Serial.println(j);
+            Serial.print(" Only lower indexes in: ");
+            Serial.print(i);
+            Serial.print(" ,");
+            Serial.println(j);
             setAllVirtualWalls(i,j);
             flag = true;
           }
@@ -1422,22 +1516,22 @@ void deadEndSweep() {
 // Used as a short cut in the dead end sweep.
 boolean onlyLowerIndicies(int lx, int ly) {
   int flag = 0;
-  if(!getWallBitNorth(lx, ly)) {
+  if(!getWallN(lx, ly)) {
     if(I[lx][ly+1] == (I[lx][ly]-1)) {
       flag++;
     }
   }
-  if(!getWallBitSouth(lx, ly)) {
+  if(!getWallS(lx, ly)) {
     if(I[lx][ly-1] == (I[lx][ly]-1)) {
       flag++;
     }
   }
-  if(!getWallBitEast(lx, ly)) {
+  if(!getWallE(lx, ly)) {
     if(I[lx+1][ly] == (I[lx][ly]-1)) {
       flag++;
     }
   }
-  if(!getWallBitWest(lx, ly)) {
+  if(!getWallW(lx, ly)) {
     if(I[lx-1][ly] == (I[lx][ly]-1)) {
       flag++;
     }
@@ -1463,7 +1557,10 @@ boolean onlyLowerIndicies(int lx, int ly) {
              Serial.print(i); 
              Serial.print(", "); 
              Serial.println(j); 
-             setAllVirtualWalls(i,j); 
+             if ((Lx != i) && (Ly != j))
+             {
+               setAllVirtualWalls(i,j); 
+             }
            } 
          } 
          } 
@@ -1485,28 +1582,28 @@ void parentSweep()
   }else if(isCenter(lx,ly)){
    //do nothing
   } else {
-  if(!getWallBitNorth(lx,ly)) {
+  if(!getWallN(lx,ly)) {
     if(ly < Size){
       if((I[lx][ly]-1) == I[lx][ly+1]) {
         setParentBit(lx, ly, 0);
       }
     }
   }
-  if(!getWallBitSouth(lx,ly)) {
+  if(!getWallS(lx,ly)) {
     if(ly > 0){
       if((I[lx][ly]-1) == I[lx][ly-1]) {
         setParentBit(lx, ly, 1);
       }
     }
   }
-  if(!getWallBitEast(lx,ly)) {
+  if(!getWallE(lx,ly)) {
     if(lx < Size){
       if((I[lx][ly]-1) == I[lx+1][ly]) {
         setParentBit(lx, ly, 2);
       }
     }
   }
-  if(!getWallBitWest(lx,ly)) {
+  if(!getWallW(lx,ly)) {
     if(lx > 0){
       if((I[lx][ly]-1) == I[lx-1][ly]) {
         setParentBit(lx, ly, 3);
@@ -1522,17 +1619,20 @@ void parentSweep()
 // Used in the deadEndSweep function
 int numberOfWalls(int lx, int ly) {
   int numberOfWalls = 0; //keeps count of number of walls
-  if(getWallBitNorth(lx,ly)) {
+  if(getWallN(lx,ly)) {
     numberOfWalls++; 
   }
-  if(getWallBitSouth(lx,ly)) {
+  if(getWallS(lx,ly)) {
     numberOfWalls++; 
   }
-  if(getWallBitWest(lx,ly)) {
+  if(getWallW(lx,ly)) {
     numberOfWalls++; 
   }
-  if(getWallBitEast(lx,ly)) {
+  if(getWallE(lx,ly)) {
     numberOfWalls++; 
+  }
+  if (getVirtualWallsBit(lx,ly)) {
+   numberOfWalls = 4; 
   }
   return numberOfWalls;
 }
@@ -1593,9 +1693,9 @@ boolean goneTooFar(int lx, int ly) {
    double smallestMD = 257; // Smallest Manhattan distance variable. Initialized high to check for oddities later 
    int dir = 4; // Direction to move! Arbitrarily initialized at to an INVALID value 
    // CHECKS NORTH 
-   if (!getWallBitNorth(Lx,Ly)) { // If there's not a wall 
+   if (!getWallN(Lx,Ly)) { // If there's not a wall 
      if (!getExploredBit(Lx,Ly+1)) { // And it's not visited 
-   double movesTo = movesToCenter(Lx,Ly+1); 
+       double movesTo = movesToCenter(Lx,Ly+1); 
        if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
          smallestMD = movesTo; // It updates the smallest manhattan distance 
          dir = 0; // And sets the relevant direction 
@@ -1603,7 +1703,7 @@ boolean goneTooFar(int lx, int ly) {
      } 
    } 
    // CHECKS SOUTH 
-   if (!getWallBitSouth(Lx,Ly)) { // If there's not a wall 
+   if (!getWallS(Lx,Ly)) { // If there's not a wall 
      if (!getExploredBit(Lx,Ly-1)) { // And it's not visited 
        double movesTo = movesToCenter(Lx,Ly-1); 
        if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
@@ -1613,7 +1713,7 @@ boolean goneTooFar(int lx, int ly) {
      } 
    } 
    // CHECKS EAST 
-   if (!getWallBitEast(Lx,Ly)) { // If there's not a wall 
+   if (!getWallE(Lx,Ly)) { // If there's not a wall 
      if (!getExploredBit(Lx+1,Ly)) { // And it's not visited 
      double movesTo = movesToCenter(Lx+1,Ly); 
        if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
@@ -1623,7 +1723,7 @@ boolean goneTooFar(int lx, int ly) {
      } 
    } 
    // CHECKS WEST 
-   if (!getWallBitWest(Lx,Ly)) { // If there's not a wall 
+   if (!getWallW(Lx,Ly)) { // If there's not a wall 
      if (!getExploredBit(Lx-1,Ly)) { // And it's not visited 
        double movesTo = movesToCenter(Lx-1,Ly); 
        if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
@@ -1634,8 +1734,21 @@ boolean goneTooFar(int lx, int ly) {
    } 
    // CHECKS FOR ODDITIES (There were no unexplored options) 
    if (smallestMD == 257) { 
+     
+     //EAST 
+     if (!getWallE(Lx,Ly)) { // If there's not a wall 
+       if ((I[Lx][Ly]+1) == I[Lx+1][Ly] ) { 
+         double movesTo = movesToCenter(Lx+1,Ly); 
+         if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
+           smallestMD = movesTo; // It updates the smallest manhattan distance 
+           dir = 2; // And sets the relevant direction 
+         } 
+       } 
+     } 
+     
+     
      //NORTH 
-     if (!getWallBitNorth(Lx,Ly)) { // If there's not a wall 
+     if (!getWallN(Lx,Ly)) { // If there's not a wall 
        if ((I[Lx][Ly]+1) == I[Lx][Ly+1] ) { 
          double movesTo = movesToCenter(Lx,Ly+1); 
          if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
@@ -1645,7 +1758,7 @@ boolean goneTooFar(int lx, int ly) {
        } 
      } 
      //SOUTH 
-     if (!getWallBitSouth(Lx,Ly)) { // If there's not a wall 
+     if (!getWallS(Lx,Ly)) { // If there's not a wall 
        if ((I[Lx][Ly]+1) == I[Lx][Ly-1] ) { 
          double movesTo = movesToCenter(Lx,Ly-1); 
          if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
@@ -1654,18 +1767,9 @@ boolean goneTooFar(int lx, int ly) {
          } 
        } 
      } 
-     //EAST 
-     if (!getWallBitEast(Lx,Ly)) { // If there's not a wall 
-       if ((I[Lx][Ly]+1) == I[Lx+1][Ly] ) { 
-         double movesTo = movesToCenter(Lx+1,Ly); 
-         if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
-           smallestMD = movesTo; // It updates the smallest manhattan distance 
-           dir = 2; // And sets the relevant direction 
-         } 
-       } 
-     } 
+     
      //WEST 
-     if (!getWallBitWest(Lx,Ly)) { // If there's not a wall 
+     if (!getWallW(Lx,Ly)) { // If there's not a wall 
        if ((I[Lx][Ly]+1) == I[Lx-1][Ly] ) { 
          double movesTo = movesToCenter(Lx-1,Ly); 
          if (movesTo < smallestMD) { // If the manhattan distance is smaller than the current smallest manhattan distance 
@@ -1676,16 +1780,16 @@ boolean goneTooFar(int lx, int ly) {
      } 
    } 
    if (smallestMD == 257) { 
-     if (!getWallBitNorth(Lx,Ly)) { 
+     if (!getWallN(Lx,Ly)) { 
        dir = 0; 
      } 
-     if (!getWallBitSouth(Lx,Ly)) { 
+     if (!getWallS(Lx,Ly)) { 
        dir = 1; 
      } 
-     if (!getWallBitEast(Lx,Ly)) { 
+     if (!getWallE(Lx,Ly)) { 
        dir = 2; 
      } 
-     if (!getWallBitWest(Lx,Ly)) { 
+     if (!getWallW(Lx,Ly)) { 
        dir = 3; 
      } 
    } 
@@ -1858,30 +1962,30 @@ boolean foundShortest() {
     for(int j = 0; j <= Size; j++) {
       if(getExploredBit(i,j)) {
         if(numberOfWalls(i,j) != 4) {
-          if(!getWallBitNorth(i,j)) {
+          if(!getWallN(i,j)) {
               //WHY IS THERE A 7 HERE?????
-            if(j<7) {
+            if(j<Size) {
               if(!getExploredBit(i,j+1)) {
                 return false;
               }
             }
           }
-          if(!getWallBitSouth(i,j)) {
-            if(j>1) {
+          if(!getWallS(i,j)) {
+            if(j>=1) {
               if(!getExploredBit(i,j-1)) {
                 return false;
               }
             }//one fewer space because of double digit index
           }
-          if(!getWallBitEast(i,j)) {
-            if(i<7) {
+          if(!getWallE(i,j)) {
+            if(i<Size) {
               if(!getExploredBit(i+1,j)) {
                 return false;
               }
             }
           }
-          if(!getWallBitWest(i,j)) {
-            if(j>1) {
+          if(!getWallW(i,j)) {
+            if(j>=1) {
               if(!getExploredBit(i-1,j)) {
                 return false;
               }
@@ -2059,7 +2163,7 @@ void outputMaze()
           Serial.print("#####");
         //virtual walls
       } 
-      else if(getVirtualWallsBit(i, j)) {
+      else if(getVirtualWallsBit(i, j) || (getVirtualWallsBit(i, j + 1))) {
           Serial.print("@@@@@");
       }
       else {
@@ -2094,7 +2198,7 @@ void outputMaze()
             Serial.print("     #");
           }
         } 
-        else if (getVirtualWallsBit(i,j)) {
+        else if (getVirtualWallsBit(i,j) || (getVirtualWallsBit(i + 1, j))) {
           if(k==1) {
             if(I[i][j] > 9){
               Serial.print(" ");
