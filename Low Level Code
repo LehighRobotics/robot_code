@@ -1,0 +1,385 @@
+//red 12 - dir
+//11 - en4 north motor
+//10 -en3 west motor
+//9 - en2 south motor
+//8 - en1 east motor
+//7 - step
+//A0 
+//A2
+//A4
+//A5
+//Digital Pins 13 and 4 are on the toggle swtich
+
+//digital pins 11 and 8 conrol N/S motors - dir HIGH north
+//digital pins 10 and 9 control W/E motors
+
+//*****************IMU Declarations*************
+#include "Wire.h"
+
+// I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
+// for both classes must be in the include path of your project
+#include "I2Cdev.h"
+#include "MPU6050.h"
+
+MPU6050 accelgyro;
+
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
+int16_t mx, my, mz;
+
+bool blinkState = false;
+//***************END IMU Declarations**********************
+
+//************CONSTANTS *********
+int const MOTOR_DELAY = 3000; //delaymicro
+const int STEPS_PER_SQ = 130;
+const int RAMP_DELAY = 6000;
+const int RAMP_LENGTH = 50;
+const int IS_WALL_THRESH = 100; //if the sensor reads > than 100 we know a wall is in the adjacent square
+const int ERROR_SCALE_FACTOR = .05;
+const int CORRECTION_RATE = 13;
+/*************END Constants************/
+
+
+void setup() {
+   pinMode(5, OUTPUT);      // sets the digital pin as output
+   pinMode(6, OUTPUT);      // sets the digital pin as output
+   pinMode(7, OUTPUT);      // sets the digital pin as output
+   pinMode(8, OUTPUT);      // sets the digital pin as output
+   pinMode(9, OUTPUT);      // sets the digital pin as output
+   pinMode(10, OUTPUT);      // sets the digital pin as output
+   pinMode(11, OUTPUT);      // sets the digital pin as output
+   pinMode(12, OUTPUT);      // sets the digital pin as output
+ digitalWrite(12,HIGH); 
+   digitalWrite(11,LOW); 
+   digitalWrite(10,HIGH);
+    digitalWrite(9,HIGH); 
+     digitalWrite(8,LOW);
+   Serial.begin(38400);
+   analogReference(EXTERNAL);
+   
+    //*******Init IMU**********
+    Serial.println("Initializing I2C devices...");
+    accelgyro.initialize();
+
+    // verify connection
+    Serial.println("Testing device connections...");
+    Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+    //********END IMU INIT************
+}
+
+
+void loop(){ 
+//  readIMU();
+  displaySensors();
+  delay(100);
+ /* digitalWrite(12,HIGH); 
+  digitalWrite(7,LOW);
+  //digitalWrite(9,LOW);
+ // digitalWrite(11,LOW);
+ // digitalWrite(5,LOW);
+  delayMicroseconds(3000);
+ // digitalWrite(5,HIGH);
+  digitalWrite(7,HIGH);
+ // digitalWrite(9,HIGH);
+  //digitalWrite(11,HIGH);
+  delayMicroseconds(3000);
+  //Serial.println("Working");
+  //displaySensors();
+ // readIMU();
+//  Serial.println(digitalRead(13));
+ // Serial.println(digitalRead(4));
+  
+  //delay(100);
+  */
+  
+  
+  
+  delay(100);
+  moveUnit(0);
+  delay(1000);
+  moveUnit(0);
+  delay(1000);
+  moveUnit(0);
+  delay(1000);
+  moveUnit(1);
+  delay(1000);
+  moveUnit(1);
+  delay(1000);
+  moveUnit(1);
+  delay(1000);
+ // moveNorth();
+  delay(10000000);
+  
+  
+}
+
+
+void displaySensors() {
+  int north = readNorth();
+  int south = readSouth();
+  int east = readEast();
+  int west = readWest();
+  Serial.print("N: ");
+  Serial.print(north);
+  Serial.print("   S: ");
+  Serial.print(south);
+  Serial.print("  W: ");
+  Serial.print(west);
+  Serial.print("  E: ");
+  Serial.println(east);
+  
+}
+
+int readNorth() {
+ return analogRead(A4); 
+}
+
+int readSouth() {
+ return analogRead(A1); 
+}
+
+int readEast() {
+ return analogRead(A3); 
+}
+
+int readWest() {
+ return analogRead(A5); 
+}
+
+void readIMU() {
+  accelgyro.getMotion9(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
+
+    // these methods (and a few others) are also available
+    //accelgyro.getAcceleration(&ax, &ay, &az);
+    //accelgyro.getRotation(&gx, &gy, &gz);
+
+    // display tab-separated accel/gyro x/y/z values
+    Serial.print("a/g/m:\t");
+    Serial.print(ax); Serial.print("\t");
+    Serial.print(ay); Serial.print("\t");
+    Serial.print(az); Serial.print("\t");
+    Serial.print(gx); Serial.print("\t");
+    Serial.print(gy); Serial.print("\t");
+    Serial.print(gz); Serial.print("\t");
+    Serial.print(mx); Serial.print("\t");
+    Serial.print(my); Serial.print("\t");
+    Serial.println(mz);  
+}
+
+
+
+void moveUnit(int dir) {
+  setMotors(dir);
+  ramp(true);
+  //Move one square
+   for  (int i = 0; i <= STEPS_PER_SQ; i++) {
+    stepMotors(MOTOR_DELAY);
+    if (i%CORRECTION_RATE == 0) {
+     centering(dir,MOTOR_DELAY); 
+    }
+  }
+  ramp(false);
+  disableAllMotors();
+}
+
+
+
+//false means ramp down, true means ramp up
+void ramp(boolean ramp_dir) {
+  if(!ramp_dir) {
+    int d = MOTOR_DELAY;
+    for  (int i = 0; i <= RAMP_LENGTH; i++) {
+         stepMotors(d);
+         d = d + ((RAMP_DELAY - MOTOR_DELAY)/RAMP_LENGTH);
+     }
+  }
+  else {
+    int d = RAMP_DELAY;
+     for  (int i = 0; i <= RAMP_LENGTH; i++) {
+         stepMotors(d);
+         d = d - ((RAMP_DELAY - MOTOR_DELAY)/RAMP_LENGTH);
+     } 
+  }
+}
+
+//This is the main error correction method that will keep the robot centered while moving
+void centering(int dir,int mdelay) {
+  if(inTube(dir)) {
+    centerInTube(dir, mdelay);
+  }
+  
+  
+  //At the end set the motors back to how they were
+  setMotors(dir);
+}
+
+void centerInTube(int dir, int mdelay) {
+  int error = findTubeError(dir);
+  setCorrectionMotor(dir, error);
+  //475 is the worst error we can get
+  error = abs(error*ERROR_SCALE_FACTOR);
+  for (int i =0; i < error; i++) {
+       stepMotors(mdelay);
+  }
+}
+
+
+//disables all motors then sets one motor to spin in order to correct the robot
+void setCorrectionMotor(int dir, int error) {
+  if (((dir == 0) && (error >= 0)) || ((dir == 1) && (error < 0))) { //spin the west motor
+  setWestMotor();
+  } 
+  else if(((dir == 0) && (error < 0)) || ((dir == 1) && (error >= 0))) {
+    setEastMotor(); 
+  }
+  else if(((dir == 2) && (error >= 0)) || ((dir == 3) && (error < 0))) {
+   setNorthMotor(); 
+  }
+  else {
+    setSouthMotor();
+  }
+}
+
+//By convetion the error will always be the left sensor minus the right sensor, define forward as the way the robot is moving
+int findTubeError(int dir) {
+  int error = 0;
+  if (dir ==0) {
+    error  = readWest() -readEast();
+  } else if(dir == 1) {
+    error  = readEast() -readWest();
+  } else if(dir == 2) {
+    error  = readNorth() -readSouth();
+  } else if(dir == 3) {
+    error  = readSouth() -readNorth();
+  } else {
+   Serial.println("Error: in findTubeError - invalid dir"); 
+  }
+ return error;
+}
+
+//Returns whether or not there is a wall on one side of the robot and what side that is
+//If there are no walls return -1
+//If there is more than one wall return 4
+int wall_on_side() {
+  int side = -1; //no walls
+  int count = 0;
+  if (readNorth() > IS_WALL_THRESH) {
+   count++;
+   side = 0;  
+  } 
+  if (readSouth() > IS_WALL_THRESH) {
+   count++;
+   side = 1;  
+  } 
+  if (readEast() > IS_WALL_THRESH) {
+   count++;
+   side = 2;  
+  } 
+  if (readWest() > IS_WALL_THRESH) {
+   count++;
+   side = 3;  
+  } 
+  if (count >= 2) {
+   side = 4; //more that one wall 
+  }
+  return side;
+}
+
+//Returns whether or not the robot is in a tube
+boolean inTube(int dir) { 
+  if (dir == 0 || dir == 1) { //moving North or South
+    return ((readEast() >IS_WALL_THRESH)&& (readWest() > IS_WALL_THRESH));
+  }
+  else{
+     return ((readNorth() >IS_WALL_THRESH)&& (readSouth() > IS_WALL_THRESH));
+  }
+}
+
+//UNUSED OVERLOAD
+/*
+void ramp(int low_value, int high_value, boolean ramp_dir) {
+      for  (int i = 0; i <= 50; i++) {
+    digitalWrite(7,LOW);
+   delayMicroseconds(d);
+  digitalWrite(7,HIGH);
+  delayMicroseconds(d);
+  d = d + ((RAMP_DELAY - MOTOR_DELAY)/50);
+  }
+}
+*/
+
+//Depending on the passed in direction set enable the right motors and directions
+void setMotors(int dir) {
+  if (dir == 0) {
+    digitalWrite(12,HIGH); //dir 
+  digitalWrite(11,LOW); //enables 
+  digitalWrite(10,HIGH);
+  digitalWrite(9,HIGH); 
+  digitalWrite(8,LOW); 
+  } else if (dir == 1) {
+   digitalWrite(12,LOW); //dir 
+  digitalWrite(11,LOW); //enables 
+  digitalWrite(10,HIGH);
+  digitalWrite(9,HIGH); 
+  digitalWrite(8,LOW);  
+  } else if (dir == 2) {
+  digitalWrite(12,HIGH); //dir 
+  digitalWrite(11,HIGH); //enables 
+  digitalWrite(10,LOW);
+  digitalWrite(9,LOW); 
+  digitalWrite(8,HIGH);
+  } else {
+    digitalWrite(12,LOW); //dir 
+  digitalWrite(11,HIGH); //enables 
+  digitalWrite(10,LOW);
+  digitalWrite(9,LOW); 
+  digitalWrite(8,HIGH);
+  }
+}
+
+
+void disableAllMotors(){
+  digitalWrite(11,HIGH); //enables 
+  digitalWrite(10,HIGH);
+  digitalWrite(9,HIGH); 
+  digitalWrite(8,HIGH); 
+}
+
+
+void setNorthMotor() {
+  digitalWrite(11,LOW); //enables 
+  digitalWrite(10,HIGH);
+  digitalWrite(9,HIGH); 
+  digitalWrite(8,HIGH); 
+}
+
+
+void setSouthMotor() {
+  digitalWrite(11,HIGH); //enables 
+  digitalWrite(10,HIGH);
+  digitalWrite(9,LOW); 
+  digitalWrite(8,HIGH); 
+}
+
+
+void setEastMotor() {
+  digitalWrite(11,HIGH); //enables 
+  digitalWrite(10,HIGH);
+  digitalWrite(9,HIGH); 
+  digitalWrite(8,LOW); 
+}
+
+void setWestMotor() {
+  digitalWrite(11,HIGH); //enables 
+  digitalWrite(10,LOW);
+  digitalWrite(9,HIGH); 
+  digitalWrite(8,HIGH); 
+}
+
+void stepMotors(int d) {
+       digitalWrite(7,HIGH);
+       delayMicroseconds(d); 
+       digitalWrite(7,LOW);
+       delayMicroseconds(d);
+}
