@@ -26,7 +26,6 @@ const int Size = 15;
 byte centMin = 255; // The smallest index in the center square that has been found so far (the LENGTH of the current shortest path)
 
 
-//TODO: continue writing methods to manipulate squareData and replace old arrays
 byte squareData[Size + 1][Size + 1]; //0 - Explored, 1 and 2 - Parent Direction, 3, 4, 5, 6 - Walls (N, S, E, W) 7 - virtual walls on/off
 byte I[Size+1][Size+1]; // Array of indicies //index array
 
@@ -242,7 +241,7 @@ void setup() {
   whereToGo[0] = Size+1;
   whereToGo[1] = Size+1;
   
-  //Note initializing these to Size+1 is important to the GoneToFar function  TODO: Fix this
+  //Note initializing these to Size+1 is important to the GoneToFar function 
   finalCenterSquare[0] =Size+1;
   finalCenterSquare[1] =Size+1;
   
@@ -827,7 +826,7 @@ return false;
 /* initializeParents
 *  Initializes the parents array to all fours (Since four is an invalid number for a parent if the four is ever used an runtime error will occur)
 *  This method also initializes whereToGo to Size+1, again an invalid number
-*  TODO: Figure out a better way to initialize these values instead of using an invalid number
+*  DEPRECATED (initializeParentBit)
 */
 /*
 void initializeParents() {
@@ -863,11 +862,9 @@ void initializeParentBit()
 
 /* updateCentMin
 *  Checks the indices of all the center squares and makes sure centMin is set to the lowest values
-*  TODO: Make it so that this method is not dependant on finalCenterSquare being initialized to higher than Size
-*  can be left as is for now
 */
 void updateCentMin() {
-  if(finalCenterSquare[0]<Size) {      //TODO: Make it so that this mtethod is not dependant on finalCenterSquare being initialized to higher than Size
+  if(finalCenterSquare[0]<Size) {      
    centMin = I[finalCenterSquare[0]][finalCenterSquare[1]]; 
   }
 }
@@ -1131,7 +1128,6 @@ boolean isEastWall(){
 
 /* moveUnit
 *  Pass in the desired direction you want the robot to move(N = 0, S = 1, E = 2, W = 3)
-*  TODO: Motor code needs to be added
 */
 void moveUnit(int x){
   if ((x == 0)&&!isWallNorth()) {
@@ -1426,7 +1422,7 @@ void updateIndicies()
 *  Checks to see if there are discrepancies between the indices of adjacent squares without walls in between them 
 *  (i.e A 13 adjacent to a 9 with no wall in between)
 *  If a discrepancy is found correctLinearity is called to fix it
-*  TODO: I beleive checkLinearity might never be called and correctLinearity is called instead
+*  DEPRECATED (correctLinearity)
 */
 /*
 void checkLinearity() {
